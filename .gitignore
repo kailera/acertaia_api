@@ -149,3 +149,5 @@ dist
 
 # cursor
 .cursor
+
+/src/generated/prisma
