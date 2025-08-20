@@ -1,5 +1,8 @@
 import { build } from "esbuild";
+import fs from "fs";
 
+
+const nodeModules = fs.readdirSync('node_modules').filter(d=> d !=='.bin')
 build({
   entryPoints: ["src/index.ts"],
   bundle: true,
@@ -8,20 +11,8 @@ build({
   outfile: "dist/index.js",
   sourcemap: true,
   external: [                      // não empacota dependências do node_modules
-    "dotenv",
-    "@voltagent/core",
-    "@voltagent/logger",
-    "@voltagent/vercel-ai",
-    "@ai-sdk/openai",
-    "@prisma/client",
-    "@pinecone-database/*",
-    "*",
-    ".prisma/client",       // não bundle o client gerado
-    "stream",               // Node nativo
-    "fs",                   // Node nativo
-    "path",                 // Node nativo
-    "os",                   // Node nativo
-    "crypto"
+    ...nodeModules,
+    './prisma/client'
   ],
   format:"esm"
 }).catch(() => process.exit(1));
