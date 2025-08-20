@@ -12,7 +12,9 @@ build({
     "@voltagent/core",
     "@voltagent/logger",
     "@voltagent/vercel-ai",
-    "@ai-sdk/openai"
+    "@ai-sdk/openai",
+    "@prisma/client",
+    ".prisma/client"
   ],
   format:"esm"
 }).catch(() => process.exit(1));
