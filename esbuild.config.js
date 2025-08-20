@@ -14,7 +14,12 @@ build({
     "@voltagent/vercel-ai",
     "@ai-sdk/openai",
     "@prisma/client",
-    ".prisma/client"
+    ".prisma/client",       // não bundle o client gerado
+    "stream",               // Node nativo
+    "fs",                   // Node nativo
+    "path",                 // Node nativo
+    "os",                   // Node nativo
+    "crypto"
   ],
   format:"esm"
 }).catch(() => process.exit(1));
