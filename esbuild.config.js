@@ -5,7 +5,7 @@ build({
   bundle: true,
   platform: "node",
   target: "node20", // ou node18, depende do ambiente
-  outfile: "dist/bundle.js",
+  outfile: "dist/index.js",
   sourcemap: true,
   external: [                      // não empacota dependências do node_modules
     "dotenv",
