@@ -14,6 +14,8 @@ build({
     "@voltagent/vercel-ai",
     "@ai-sdk/openai",
     "@prisma/client",
+    "@pinecone-database/*",
+    "*",
     ".prisma/client",       // não bundle o client gerado
     "stream",               // Node nativo
     "fs",                   // Node nativo
