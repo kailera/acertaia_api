@@ -1,24 +1,23 @@
 import { CustomEndpointDefinition } from "@voltagent/core";
 import { loginUser } from "../services/login";
+import withCORS from "../utils/with-cors";
 
 export const userEndpoints: CustomEndpointDefinition[] = [
   {
     path: "/api/login",
     method: "post" as const,
-    handler: async (c: any) => {
+    handler: withCORS(async (c: any) => {
       const body = await c.req.json();
       const { email, password } = body;
+
       try {
-        console.log(`cheguei na api`);
-        // veja sobre o hash da senha
         const token = await loginUser(email, password);
 
-        // está retornando o token jwt
         return c.json(
           {
             success: true,
             message: "Login successful",
-            data: token, // aqui está o JWT
+            data: token,
           },
           201
         );
@@ -32,7 +31,7 @@ export const userEndpoints: CustomEndpointDefinition[] = [
           400
         );
       }
-    },
+    }),
     description: "[publica] busca email para login",
   },
 ];
