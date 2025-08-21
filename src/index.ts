@@ -23,6 +23,7 @@ const logger = createPinoLogger({
 
 registerCustomEndpoints(userEndpoints);
 
+
 const dataAnalysisAgent = new Agent({
   name: "Endomarketing Data Analysis Agent",
   purpose:
