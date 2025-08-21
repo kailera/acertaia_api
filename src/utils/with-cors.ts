@@ -1,4 +1,4 @@
-export default function withCORS(handler: any) {
+export default   function withCORS(handler: any) {
   return async (c: any) => {
     c.res.headers.set(
       "Access-Control-Allow-Origin",

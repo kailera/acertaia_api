@@ -46,7 +46,7 @@ model User{
   updateAte DateTime @updatedAt
 
   agentIa AgentsIa[]
-  whatsappNumbers WhatsappNumbers[]
+  whatsappNumbers WhatsappNumbers?
   contacts Contacts[]
   @@map("user")
 
@@ -106,9 +106,9 @@ model Document {
 model WhatsappNumbers{
   id String @default(cuid()) @id
   number String 
-  userId  String
-  instance String
+  userId  String @unique
   user User @relation(fields: [userId], references: [id])
+  instance String
   createdAt DateTime @default(now())
   updateAt DateTime @updatedAt
 

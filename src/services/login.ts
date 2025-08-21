@@ -9,6 +9,6 @@ export const loginUser = async (email: string, password: string) => {
   if (!passwordMatch) {
     return null;
   }
-  
+  // password passado
   return queryUser;
 };
