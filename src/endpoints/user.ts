@@ -1,23 +1,23 @@
 import { CustomEndpointDefinition } from "@voltagent/core";
 import { loginUser } from "../services/login";
-import withCORS from "../utils/with-cors";
 
 export const userEndpoints: CustomEndpointDefinition[] = [
   {
     path: "/api/login",
     method: "post" as const,
-    handler: withCORS(async (c: any) => {
+    handler: async (c: any) => {
       const body = await c.req.json();
       const { email, password } = body;
 
       try {
-        const token = await loginUser(email, password);
+        const user = await loginUser(email, password);
 
+        console.log(`user encontrado: ${user}`);
         return c.json(
           {
             success: true,
             message: "Login successful",
-            data: token,
+            data: user,
           },
           201
         );
@@ -31,7 +31,7 @@ export const userEndpoints: CustomEndpointDefinition[] = [
           400
         );
       }
-    }),
+    },
     description: "[publica] busca email para login",
   },
 ];
