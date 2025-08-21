@@ -107,6 +107,7 @@ model WhatsappNumbers{
   id String @default(cuid()) @id
   number String 
   userId  String
+  instance String
   user User @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updateAt DateTime @updatedAt

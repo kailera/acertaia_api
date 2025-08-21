@@ -1,4 +1,3 @@
-import { encrypt } from "../auth/auth";
 import { getUserbyEmail } from "../repositories/user-repository";
 import { verifyPassword } from "../utils/password";
 
@@ -10,14 +9,6 @@ export const loginUser = async (email: string, password: string) => {
   if (!passwordMatch) {
     return null;
   }
-
-  const token = encrypt({
-    id: queryUser.id,
-    name: queryUser.name,
-    email: queryUser.email,
-    businessSubscription: queryUser.businessSubscriptionId,
-    role: queryUser.role,
-  });
-
-  return token;
+  
+  return queryUser;
 };
