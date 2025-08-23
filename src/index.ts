@@ -62,6 +62,31 @@ const agentEndomarketing = new Agent({
   userContext: new Map([["environment", "production"]]),
 });
 
+
+const matriculaAgent = new Agent({
+  name: "",
+  instructions:
+    `Um Agente de matriculas que trata de :
+      historico escolar,
+      rematricula, matricula
+      cadastro de alunos, 
+      envio de documentos
+      transferencias.
+    `,
+  llm: new VercelAIProvider(),
+  model: openai("gpt-4o-mini"),
+  tools: [weatherTool],
+  subAgents: [dataAnalysisAgent, fileReportAgent],
+  purpose: "Agente de Endomarketing",
+  memory: new LibSQLStorage({
+    url: "file:./voltagent-memory.db",
+    tablePrefix: "endomarketing_memory",
+  }),
+  memoryOptions: { maxMessages: 100 },
+  userContext: new Map([["environment", "production"]]),
+});
+
+
 new VoltAgent({
   agents: {
     agentEndomarketing,

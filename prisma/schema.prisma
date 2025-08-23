@@ -14,32 +14,11 @@ datasource db {
   url = env("DATABASE_URL")
 }
 
-model BusinessSubscription{
-  id String @default(cuid()) @id
-  name String
-  description String?
-  plan SubscriptionsPlans
-
-  users User[]
-  agentsIa AgentsIa[]
-  createdAt DateTime @default(now())
-  updateAte DateTime @updatedAt
-
-  @@map("business_subscription")
-}
-
-enum SubscriptionsPlans{
-  PRO
-  PLUS
-  ADVANCED
-}
 
 model User{
   id String @default(cuid()) @id 
   name String 
   email String @unique
-  businessSubscriptionId String?
-  businessSubscription BusinessSubscription? @relation(fields: [businessSubscriptionId], references: [id])
   passwordHash String
   role Role
   createdAt DateTime @default(now())
@@ -48,18 +27,173 @@ model User{
   agentIa AgentsIa[]
   whatsappNumbers WhatsappNumbers?
   contacts Contacts[]
+  employee Employees[]
+  
   @@map("user")
-
 }
-
 enum Role{
   USER
   SUPERVISOR
-  SUPERVISOR_TENANT
+  TEACHER
+  COORDENATOR
+  PRINCIPAL
   ADMIN
   SUPERADMIN
 }
 
+
+model Employees{
+  id String @default(cuid())@id
+  userId String @unique
+  user User @relation(fields: [userId], references: [id])
+  position String
+  contract Contract
+  workload Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  teacher Teacher[]
+  @@map("employees")
+}
+enum Contract{
+  CLT
+  PJ
+}
+
+//##############PEDAGÓGICO
+model Teacher{
+  id String @default(cuid())@id
+  employeeId String @unique
+  employee Employees @relation(fields: [employeeId], references: [id])
+  grade String
+  specialization String
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  functions TeacherFunctions[]
+  subject Subject[]
+  @@map("teacher")
+}
+
+enum TeacherFunctions{
+  HTCP
+  SUPERVISOR
+  SOCIAL_DEMAND
+}
+
+model Subject {
+  id        String       @id @default(cuid())
+  name      String
+  teacherId String @unique
+  teacher   Teacher      @relation(fields: [teacherId], references: [id])
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  attendances Attendance[]
+  Assessment Assessment[]
+
+  @@map("subject")
+}
+
+model Attendance {
+  id         String   @id @default(cuid())
+  date       DateTime // data da aula
+  status     AttendanceStatus // presente, falta, justificada etc.
+
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id])
+
+  subjectId  String
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@unique([studentId, subjectId, date]) // um registro por aluno/discip. e data
+  @@map("attendance")
+}
+
+  enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  JUSTIFIED
+}
+
+
+model Assessment { // provas, trabalhos, etc.
+  id          String       @id @default(cuid())
+  title       String       // ex: "Prova 1", "Trabalho de História"
+  description String?
+  type        AssessmentType
+  weight      Float        // peso da nota na média final
+  date        DateTime
+
+  subjectId   String
+  subject     Subject      @relation(fields: [subjectId], references: [id])
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  grades      Grade[]
+  @@map("assessment")
+}
+
+model Grade { // nota do aluno em uma avaliação
+  id           String     @id @default(cuid())
+  score        Float      // nota obtida
+  studentId    String
+  student      Student    @relation(fields: [studentId], references: [id])
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@unique([studentId, assessmentId]) // um aluno só tem uma nota por avaliação
+  @@map("grade")
+}
+
+
+model StudentsPrograms{
+  id String @default(cuid()) @id
+  name String
+  descript String
+  type ProgramType
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("students_programs")
+  StudentProgramsRegisters StudentProgramsRegisters[]
+}
+
+enum ProgramType{
+  SPORTS
+  OLYMPICS
+
+}
+
+model StudentProgramsRegisters {
+  id         String   @id @default(cuid())
+  studentId  String
+  programId  String
+
+  student    Student  @relation(fields: [studentId], references: [id])
+  program    StudentsPrograms  @relation(fields: [programId], references: [id])
+
+  role       String?  // ex: participante, medalhista, classificado
+  result     String?  // ex: ouro, prata, menção honrosa
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@unique([studentId, programId]) // aluno só pode estar uma vez no mesmo programa
+  @@map("student_programs_registers")
+}
+
+enum AssessmentType {
+  TEST       // prova
+  ASSIGNMENT // trabalho
+  QUIZ       // teste rápido
+  FINAL      // avaliação final
+}
+
+// ################## for me -> techinical#################
 
 model AgentsIa{
   id String @default(cuid()) @id 
@@ -69,14 +203,13 @@ model AgentsIa{
   enableAudio Boolean
   userId String 
   User User @relation(fields: [userId], references: [id])
-  businessSubscriptionId String
-  businessSubscription BusinessSubscription @relation(fields: [businessSubscriptionId], references: [id])
 
-  documents Document[]
+
+  documents DocumentAgents[]
   createdAt DateTime @default(now())
   updateAte DateTime @updatedAt
 
-    @@map("agents")
+  @@map("agents")
 
 }
 
@@ -90,7 +223,102 @@ enum AgentIaTypes{
 }
 
 
-model Document {
+// #################### Alunos e relacionados ###########################
+model Student {
+  id          String        @id @default(cuid())
+  firstName   String
+  lastName    String?
+  birth       String
+  scholarship Scholarship
+
+  // Relação com Sponsor através da tabela Responsible
+  responsibles Responsible[]
+  documents DocumentStudents[]
+  registration Registration?
+  schoolRecord SchoolRecord[]
+  transference Transference?
+  scheduleSpace ScheduleSpace[]
+  attendance Attendance[]
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  Grade Grade[] 
+  StudentProgramsRegisters StudentProgramsRegisters[]
+  @@map("students")
+}
+
+enum Scholarship{
+  SPORTS
+  RESEARCH
+  SOCIAL_DEMAND
+  MERIT
+  CONTEST
+}
+
+model Sponsor {
+  id          String        @id @default(cuid())
+  firstName   String
+  lastName    String?
+  birth       String
+  isMain      Boolean
+
+  // Relação com Student através da tabela Responsible
+  responsibles Responsible[]
+  documents DocumentSponsor[]
+  plan Plans?
+  ordersUniforms OrdersUniforms[]
+  @@map("sponsor")
+}
+
+model Responsible {
+  studentId String
+  sponsorId String @unique
+  relation  Relation   // <- grau de parentesco (pai, mãe, tio, etc.)
+
+  student   Student  @relation(fields: [studentId], references: [id])
+  sponsor   Sponsor  @relation(fields: [sponsorId], references: [id])
+
+  registration Registration?
+  @@id([studentId, sponsorId]) // chave composta
+  @@map("responsibles")
+}
+
+enum Relation{
+  PAI
+  AVÔ
+  AVÓ
+  MAE
+  BABA
+}
+
+model DocumentStudents {
+  id        String   @id @default(cuid())
+  type      String   // ex.: RG, CPF, Histórico Escolar
+  path      String   // caminho/URL para o arquivo
+  uploadedAt DateTime @default(now())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  @@map("students_documents")
+}
+
+model DocumentSponsor {
+  id        String   @id @default(cuid())
+  type      String
+  path      String
+  uploadedAt DateTime @default(now())
+
+  sponsorId String
+  sponsor   Sponsor @relation(fields: [sponsorId], references: [id])
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("sponsor_documents")
+}
+
+
+model DocumentAgents {
   id        String   @default(cuid()) @id
   name      String
   mimeType  String
@@ -99,16 +327,197 @@ model Document {
   agentIa   AgentsIa @relation(fields: [agentiaId], references: [id])
   createdAt DateTime @default(now())
   updateAt DateTime @updatedAt
-  @@map("documents")
+  @@map("agent_documents")
 
 }
 
+model Registration{
+  id String @default(cuid())@id
+  studentId String @unique
+  student Student @relation(fields: [studentId], references: [id])
+  responsibleId String @unique
+  responsible Responsible @relation(fields: [responsibleId], references: [sponsorId])
+  isFirstRegistration Boolean
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  
+  @@map("registration")
+}
+
+model SchoolRecord {
+  id         String   @id @default(cuid())
+  year       Int      // ano letivo (ex: 2024)
+  grade      String   // série/etapa (ex: 9º ano, 2º médio)
+  average    Float?   // média geral do aluno
+  status     String?  // aprovado, reprovado, em andamento
+  notes      String?  // observações do histórico
+  filePath   String?  // caminho para PDF do histórico (opcional)
+
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("school_records")
+}
+
+model Transference{
+  id String @id @default(cuid())
+  studentId String @unique
+  student Student @relation(fields: [studentId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("transference")
+}
+ 
+//########################### Financeiro ########################
+
+model Plans{
+  id String @default(cuid()) @id
+  sponsorId String @unique
+  sponsor Sponsor @relation(fields: [sponsorId], references: [id])
+  plan Plan
+  agreement Agreement? @default(NONE)
+  negotiation String?
+  paymentDate DateTime 
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  payment Payment[]
+  @@map("plans")
+}
+
+enum Agreement{
+  NONE
+  STAR
+  GREYHOUND
+  MONEYSAVER
+}
+
+enum Plan{
+  STANDART
+  SILVER
+  GOLD
+}
+
+model Payment {
+  id         String   @id @default(cuid())
+  amount     Float    // valor pago
+  status     PayStatus   // ex.: "PENDING", "PAID", "CANCELED"
+  method     PayMethod?  // ex.: "PIX", "Boleto", "Cartão"
+  paidAt     DateTime? // data em que foi pago
+  dueDate    DateTime  // data de vencimento
+  notes      String?
+
+  planId     String
+  plan       Plans    @relation(fields: [planId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("payments")
+}
+
+enum PayStatus{
+  PENDING
+  PAID
+  CANCELED
+}
+enum PayMethod{
+  PIX
+  BOLETO
+  CARTAO
+}
+
+model Boletos{
+  id String @default(cuid()) @id
+  typedLine String
+  expiredIn DateTime 
+  status BoletoStatus
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("boletos")
+}
+
+enum BoletoStatus{
+  PAIED
+  PENDENT
+  EXPIRED
+}
+
+
+//#################### Logistica ####################
+
+model Uniforms{
+  id String @default(cuid())@id
+  title String
+  descript String?
+  quantity Int
+  size Int
+  price Float
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  ordersUniforms OrdersUniforms[]
+  @@map("uniforms")
+}
+
+
+model OrdersUniforms{
+  id String @default(cuid())
+  sponsorId String @unique // responsável pelo aluno, mas aluno pode pedir
+  sponsor Sponsor @relation(fields: [sponsorId], references: [id])
+  uniformId String @unique
+  uniform Uniforms @relation(fields: [uniformId], references: [id])
+  quantity Int
+  amount Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("orders_uniforms")
+}
+
+
+
+//################ infraestrutura #######################
+model Spaces{
+  id String @default(cuid())@id
+  name String
+  type SpacesType
+  scheduleSpace ScheduleSpace[]
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+}
+
+enum SpacesType{
+  ROOM
+  MULTISPOSTS
+  INFOLAB
+  CIENCLAB
+  DEBATEROOM
+}
+
+model ScheduleSpace{
+  id String @default(cuid())@id
+  studentId String @unique
+  student Student @relation(fields: [studentId], references: [id])
+  spaceId String @unique
+  space Spaces @relation(fields: [spaceId], references: [id])
+createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  
+  @@map("schedule_space")
+}
 model WhatsappNumbers{
   id String @default(cuid()) @id
-  number String 
+  number String? 
   userId  String @unique
   user User @relation(fields: [userId], references: [id])
-  instance String
+  instance String?
   createdAt DateTime @default(now())
   updateAt DateTime @updatedAt
 
@@ -121,6 +530,10 @@ model Contacts{
   number String 
   userId String
   user User @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("contacts")
 }
 
 model Messages {
@@ -129,6 +542,10 @@ model Messages {
   sender MessageSender
   createAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  @@map("messages")
 }
 
 
