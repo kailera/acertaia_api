@@ -8,13 +8,15 @@ export  const registrationStudentsTool = createTool({
   description: "realiza a matricula e rematricula de alunos usando os documentos fornecidos",
   parameters: z.object({
     name:z.string().describe("first name"),
-    lastName:z.string().describe("last name")
+    lastName:z.string().describe("last name"),
+    rg:z.string().describe("rg")
+
 
   }),
   execute: async (args) => {
     try {
       // acione o banco de dados e insira os dados corretos
-      const result = ""
+      const result = `cadastro no banco: ${args.name}, ${args.lastName}, ${args.rg}`
       return { result };
     } catch (error:any) {
       throw new Error(`Invalid expression: ${error.message} `);
@@ -24,5 +26,4 @@ export  const registrationStudentsTool = createTool({
 
 
 
-export const 
 

@@ -553,3 +553,128 @@ enum MessageSender{
   USER
   AGENT_IA
 }
+
+//####################campanha de vendas ###########################
+model Campaign {
+  id          String    @id @default(cuid())
+  name        String
+  channel     Channel   // Meta, Google, QR Code etc.
+  startDate   DateTime
+  endDate     DateTime?
+  active      Boolean   @default(true)
+  description String?
+
+  leads       Lead[]    // leads captados por essa campanha
+  contents    Content[] // materiais enviados aos leads
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  CampaignReport CampaignReport[]
+}
+
+enum Channel {
+  META
+  GOOGLE
+  QR
+  KEYWORD
+  LANDING_PAGE
+}
+
+model Lead {
+  id             String    @id @default(cuid())
+  firstName      String?
+  lastName       String?
+  email          String
+  phone          String?
+  consent        Boolean   @default(false)
+  persona        Persona?
+  series         String?   // série/turno
+  interest       Interest?
+  utmSource      String?
+  utmCampaign    String?
+  capturedAt     DateTime  @default(now())
+  status         LeadStatus @default(NEW)
+
+  campaignId     String
+  campaign       Campaign   @relation(fields: [campaignId], references: [id])
+
+  interactions   Interaction[]
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  DISQUALIFIED
+}
+
+enum Persona {
+  REGULAR
+  INTEGRAL
+  BILINGUE
+}
+
+enum Interest {
+  REGULAR
+  INTEGRAL
+  BILINGUE
+}
+
+model Content {
+  id          String    @id @default(cuid())
+  title       String
+  type        ContentType
+  url         String?   // link do material
+  description String?
+  createdAt   DateTime  @default(now())
+
+  campaignId  String
+  campaign    Campaign   @relation(fields: [campaignId], references: [id])
+
+  Interaction Interaction[]
+}
+
+enum ContentType {
+  VIDEO
+  AUDIO
+  LINK
+  DOCUMENT
+  GUIDE
+}
+
+model Interaction {
+  id        String    @id @default(cuid())
+  leadId    String
+  lead      Lead      @relation(fields: [leadId], references: [id])
+  contentId String?
+  content   Content?  @relation(fields: [contentId], references: [id])
+  type      InteractionType
+  timestamp DateTime  @default(now())
+}
+
+enum InteractionType {
+  MESSAGE_SENT
+  MATERIAL_SENT
+  CLICK
+  FORM_SUBMITTED
+}
+
+model CampaignReport {
+  id            String   @id @default(cuid())
+  campaignId    String
+  campaign      Campaign @relation(fields: [campaignId], references: [id])
+  weekStart     DateTime
+  weekEnd       DateTime
+
+  ctr           Float?   // Click-through rate
+  cvr           Float?   // Conversion rate
+  cpl           Float?   // Cost per lead
+  lql           Float?   // % leads qualificados
+  conversionRate Float?  // taxa de conversão geral
+  cac           Float?   // custo de aquisição por cliente
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
