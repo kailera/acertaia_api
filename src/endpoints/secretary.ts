@@ -4,16 +4,15 @@ import { SecretaryChat } from "../agents/secretary";
 
 export const secretaryEndpoints: CustomEndpointDefinition[] = [
   {
-    path: "/api/secretary",
+    path: "/api/secretary/chat",
     method: "post" as const,
     handler: async (c: any) => {
       const body = await c.req.json();
       const { input, userId, conversationId } = body;
 
 
-      // pegue os dados do a
       try {
-   
+    
        const response =  await SecretaryChat(input, userId, conversationId)
         return c.json(
           {
@@ -35,6 +34,6 @@ export const secretaryEndpoints: CustomEndpointDefinition[] = [
       }
     },
     description: "[publica] chat com secretária",
-  }
+  },
 ]
 

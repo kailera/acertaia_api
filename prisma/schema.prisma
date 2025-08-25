@@ -24,7 +24,7 @@ model User{
   createdAt DateTime @default(now())
   updateAte DateTime @updatedAt
 
-  agentIa AgentsIa[]
+  aiAgents       Agent[]         
   whatsappNumbers WhatsappNumbers?
   contacts Contacts[]
   employee Employees[]
@@ -194,33 +194,185 @@ enum AssessmentType {
 }
 
 // ################## for me -> techinical#################
+enum AgentType {
+  SECRETARIA
+  SDR
+  POS_VENDA
+  SUPORTE_TECNICO
+  VENDEDOR
+  FINANCEIRO
+  LOGISTICA
+  RH
+}
 
-model AgentsIa{
-  id String @default(cuid()) @id 
-  name String
-  type AgentIaTypes
-  personScript String
-  enableAudio Boolean
-  userId String 
-  User User @relation(fields: [userId], references: [id])
+enum AgentStatus {
+  ATIVO
+  PAUSADO
+  RASCUNHO
+}
 
+enum RuleKind {
+  MAIN
+  COND
+  FALLBACK
+}
 
-  documents DocumentAgents[]
+enum Channel {
+  WHATSAPP
+  WEB
+  INSTAGRAM
+  TELEFONE
+  EMAIL
+  TELEGRAM
+  FACEBOOK
+}
+
+enum JobStatus {
+  PENDING
+  RUNNING
+  DONE
+  ERROR
+}
+
+// ---------- Configuração Global (Supervisor) ----------
+model SupervisorConfig {
+  id             Int      @id @default(1) // um único registro
+  nome           String   @default("Supervisor")
+  online         Boolean  @default(false) // status “online/offline” do header
+  instrucoes     String?  // texto longo mostrado no card
+  slaMin         Int      @default(5)     // playbook: SLA
+  fallbackAtivo  Boolean  @default(true)  // playbook: fallback
+  horariosJson   Json?    // janelas/agenda globais (ex.: { dias: [...], janelas: [...] })
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ---------- Agente / Sub-agente ----------
+model Agent {
+  id                      String        @id @default(cuid())
+  nome                    String
+  tipo                    AgentType
+  status                  AgentStatus   @default(ATIVO)
+  persona                 String?
+  herdaPersonaDoPai       Boolean       @default(false)
+  color                   String?       // ex.: "#22c55e"
+  saude                   String?       // "ok" | "med" | "bad" (texto livre ou trocar por enum se quiser)
+  // Hierarquia (self-relation)
+  parentId                String?
+  parent                  Agent?        @relation("AgentChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children                Agent[]       @relation("AgentChildren")
+ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  // Relações auxiliares
+  canais                  AgentChannel[]
+  tags                    AgentTag[]
+  teams                   TeamMember[]
+  rulesFrom               Rule[]        @relation("RuleFrom")
+  rulesTo                 Rule[]        @relation("RuleTo")
+  trainingJobs            TrainingJob[]
+  documents AgentDocument[]  // back-relation (não precisa @relation name se houver só uma)
+
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@index([parentId])
+  @@index([tipo])
+  @@index([status])
+  @@index([ownerId])
+}
+
+// ---------- Canais do Agente (N:N simplificado) ----------
+model AgentChannel {
+  agentId String
+  channel Channel
+  primary Boolean? // opcional: marcar canal preferido
+  handle  String?  // ex.: @usuario, número, etc.
+
+  agent   Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@id([agentId, channel])                // um canal por agente
+  @@index([channel])
+}
+
+// ---------- Tags do Agente ----------
+model AgentTag {
+  id      Int    @id @default(autoincrement())
+  agentId String
+  tag     String
+
+  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, tag])
+  @@index([tag])
+}
+
+// ---------- Times ----------
+model Team {
+  id         String        @id @default(cuid())
+  nome       String
+  ativo      Boolean       @default(true)
+  color      String?
+
+  membros    TeamMember[]
+  regras     Rule[]        // regras associadas ao time (opcional)
+
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+// Membros do time, com ordenação (prioridade)
+model TeamMember {
+  id       Int     @id @default(autoincrement())
+  teamId   String
+  agentId  String
+  pos      Int     @default(0) // ordem do agente no time
+
+  team     Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  agent    Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, agentId])
+  @@index([teamId, pos])
+}
+
+// ---------- Regras / Fluxo ----------
+model Rule {
+  id       String   @id @default(cuid())
+  teamId   String?  // regra pode ser global ao time (opcional)
+  deId     String   // from agent
+  paraId   String   // to agent
+  tipo     RuleKind
+  condicao String?  // ex.: "Sem agenda", "BANT: orçamento OK" etc.
+  ordem    Int?     // ordenação entre regras semelhantes
+
+  team     Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  de       Agent    @relation("RuleFrom", fields: [deId], references: [id], onDelete: Cascade)
+  para     Agent    @relation("RuleTo", fields: [paraId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
-  updateAte DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
-  @@map("agents")
-
+  @@index([teamId])
+  @@index([deId])
+  @@index([paraId])
 }
 
-enum AgentIaTypes{
-  ENDOMARKETING
-  HR
-  SDV
-  FILES
-  LOGISTIC
-  FINANCES
+// ---------- Jobs de Treino (para ação “Treinar”) ----------
+model TrainingJob {
+  id        String    @id @default(cuid())
+  agentId   String
+  status    JobStatus @default(PENDING)
+  meta      Json?
+  error     String?
+
+  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([agentId, status])
 }
+
+
 
 
 // #################### Alunos e relacionados ###########################
@@ -318,18 +470,22 @@ model DocumentSponsor {
 }
 
 
-model DocumentAgents {
-  id        String   @default(cuid()) @id
+model AgentDocument {
+  id        String   @id @default(cuid())
   name      String
   mimeType  String
-  url       String   // URL pública ou protegida no Supabase Storage
-  agentiaId String
-  agentIa   AgentsIa @relation(fields: [agentiaId], references: [id])
-  createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
-  @@map("agent_documents")
+  url       String            // caminho/URL no storage
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("agent_documents")   // nome da tabela no banco
+  @@index([agentId])         // consultas por agente ficam rápidas
+  // @@unique([agentId, name]) // opcional: evita nomes duplicados por agente
 }
+
 
 model Registration{
   id String @default(cuid())@id
@@ -538,12 +694,15 @@ model Contacts{
 
 model Messages {
   id String @default(cuid())@id
-  message String
-  sender MessageSender
+  remoteJid String?
+  message String?
+  sendAt DateTime?
+  messageId String?
+  fromMe Boolean?
+  pushName String?
+  instance String
   createAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
 
   @@map("messages")
 }
@@ -551,6 +710,7 @@ model Messages {
 
 enum MessageSender{
   USER
+  CLIENT
   AGENT_IA
 }
 
@@ -573,13 +733,7 @@ model Campaign {
   CampaignReport CampaignReport[]
 }
 
-enum Channel {
-  META
-  GOOGLE
-  QR
-  KEYWORD
-  LANDING_PAGE
-}
+
 
 model Lead {
   id             String    @id @default(cuid())

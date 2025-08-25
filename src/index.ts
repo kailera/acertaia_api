@@ -1,23 +1,21 @@
-import { cohere } from "@ai-sdk/cohere";
-import { openai } from "@ai-sdk/openai";
+
 import {
-  Agent,
-  LibSQLStorage,
+
   registerCustomEndpoints,
   VoltAgent,
   VoltOpsClient,
 } from "@voltagent/core";
 import { createPinoLogger } from "@voltagent/logger";
-import { VercelAIProvider } from "@voltagent/vercel-ai";
 import "dotenv/config";
 import { userEndpoints } from "./endpoints/user";
-import { retriever } from "./retriever";
-import { weatherTool } from "./tools";
 import { expenseApprovalWorkflow } from "./workflows";
 import { SDRAgent } from "./agents/sdr";
 import { srdEndpoints } from "./endpoints/sdr";
 import { secretaryEndpoints } from "./endpoints/secretary";
 import { SecretaryAgent } from "./agents/secretary";
+import {agentEndpoints} from "./endpoints/agents"
+import {teamEndpoints} from "./endpoints/teams"
+import { supervisorEndpoints } from "./endpoints/supervisor";
 
 // Create a logger instance
 const logger = createPinoLogger({
@@ -28,7 +26,9 @@ const logger = createPinoLogger({
 registerCustomEndpoints(userEndpoints);
 registerCustomEndpoints(srdEndpoints)
 registerCustomEndpoints(secretaryEndpoints)
-
+registerCustomEndpoints(supervisorEndpoints)
+registerCustomEndpoints(agentEndpoints)
+registerCustomEndpoints(teamEndpoints)
 
 new VoltAgent({
   agents: {
