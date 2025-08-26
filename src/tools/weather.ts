@@ -5,7 +5,7 @@ import { z } from "zod";
  * A tool for fetching weather information for a given location
  * This is a mock implementation - replace with real weather API
  */
-export const weatherTool = createTool({
+export const  weatherTool = createTool({
   name: "getWeather",
   description: "Get the current weather for a specific location",
   parameters: z.object({
