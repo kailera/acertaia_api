@@ -307,19 +307,7 @@ model AgentTag {
   @@index([tag])
 }
 
-// ---------- Times ----------
-model Team {
-  id         String        @id @default(cuid())
-  nome       String
-  ativo      Boolean       @default(true)
-  color      String?
 
-  membros    TeamMember[]
-  regras     Rule[]        // regras associadas ao time (opcional)
-
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-}
 
 // Membros do time, com ordenação (prioridade)
 model TeamMember {
