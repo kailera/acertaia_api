@@ -16,6 +16,10 @@ import { SecretaryAgent } from "./agents/secretary";
 import {agentEndpoints} from "./endpoints/agents"
 import {teamEndpoints} from "./endpoints/teams"
 import { supervisorEndpoints } from "./endpoints/supervisor";
+import { agentDocumentEndpoints } from "./endpoints/agents-docs";
+import { documentEndpoints } from "./endpoints/documents";
+import { uploadDirectEndpoints } from "./endpoints/upload-files";
+import { fileEndpoints } from "./endpoints/files";
 
 // Create a logger instance
 const logger = createPinoLogger({
@@ -29,6 +33,10 @@ registerCustomEndpoints(secretaryEndpoints)
 registerCustomEndpoints(supervisorEndpoints)
 registerCustomEndpoints(agentEndpoints)
 registerCustomEndpoints(teamEndpoints)
+registerCustomEndpoints(documentEndpoints)
+registerCustomEndpoints(agentDocumentEndpoints)
+registerCustomEndpoints(uploadDirectEndpoints)
+registerCustomEndpoints(fileEndpoints)
 
 new VoltAgent({
   agents: {

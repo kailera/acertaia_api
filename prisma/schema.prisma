@@ -30,6 +30,7 @@ model User{
   employee Employees[]
   
   @@map("user")
+  Document Document[]
 }
 enum Role{
   USER
@@ -262,7 +263,7 @@ model Agent {
   parentId                String?
   parent                  Agent?        @relation("AgentChildren", fields: [parentId], references: [id], onDelete: SetNull)
   children                Agent[]       @relation("AgentChildren")
-ownerId   String
+  ownerId   String
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Relações auxiliares
   canais                  AgentChannel[]
@@ -271,8 +272,7 @@ ownerId   String
   rulesFrom               Rule[]        @relation("RuleFrom")
   rulesTo                 Rule[]        @relation("RuleTo")
   trainingJobs            TrainingJob[]
-  documents AgentDocument[]  // back-relation (não precisa @relation name se houver só uma)
-
+  documents AgentDocument[]   // relação N:N via pivot
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 
@@ -470,21 +470,71 @@ model DocumentSponsor {
 }
 
 
-model AgentDocument {
+// ===== NOVO: catálogo único de documentos compartilháveis
+model Document {
   id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
   name      String
-  mimeType  String
-  url       String            // caminho/URL no storage
-  agentId   String
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  kind      DocKind           // script | csv | media | rule | other
+  mimeType  String?
+  url       String?           // para CSV/mídia/PDF (storage)
+  body      String?           // para scripts/regras (texto/markdown)
+  tags      Json?             // ["vendas","follow-up",...]
+  meta      Json?             // livre: {enc,delim,hasHeader,sample,stats,canal,mediaKind,...}
+  status    String?           // opcional: "rascunho" | "pronto" | "revisão"
+  perm      String?           // opcional: "global" | "limitado"
+
+  // back-relation para a ligação N:N
+  agents    AgentDocument[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("agent_documents")   // nome da tabela no banco
-  @@index([agentId])         // consultas por agente ficam rápidas
-  // @@unique([agentId, name]) // opcional: evita nomes duplicados por agente
+  @@index([ownerId])
+  @@index([kind])
+  @@index([status])
 }
+enum DocKind { 
+  SCRIPT
+  CSV 
+  MEDIA 
+  RULE 
+  OTHER 
+}
+
+
+model AgentDocument {
+  id          String   @id @default(cuid())
+
+  // 👇 CHAVE ESTRANGEIRA PARA AMBOS
+  agentId     String
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // 👇 informações do vínculo (úteis para sua UI de “mapear por agente”)
+  role        AgentDocRole?   // PRIMARY | EXTRA | CSV | MEDIA | RULE_OVERRIDE
+  notes       String?
+  assignedAt  DateTime @default(now())
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("agent_documents")     // mantém o nome físico que você já usa
+  @@index([agentId])
+  @@index([documentId])
+  @@unique([agentId, documentId, role]) // evita duplicado do mesmo doc no mesmo papel
+}
+enum AgentDocRole { 
+  PRIMARY 
+  EXTRA 
+  CSV 
+  MEDIA 
+  RULE_OVERRIDE 
+  }
 
 
 model Registration{

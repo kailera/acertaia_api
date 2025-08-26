@@ -1,17 +1,9 @@
 import { openai } from "@ai-sdk/openai";
-import { Agent, InMemoryStorage } from "@voltagent/core";
+import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
+import { scriptGeral } from "../scripts/geral";
 import { SecretaryScript } from "../scripts/secretary-script";
 import { registrationStudentsTool } from "../tools/secretary";
-import { scriptGeral } from "../scripts/geral";
-
-const sdrMemory = new InMemoryStorage({
-  // Optional: Limit the number of messages stored per conversation thread
-  storageLimit: 100, // Defaults to no limit if not specified
-
-  // Optional: Enable verbose debug logging from the memory provider
-  debug: true, // Defaults to false
-});
 
 export const SecretaryAgent = new Agent({
   name: "Anne",
@@ -21,7 +13,6 @@ export const SecretaryAgent = new Agent({
   tools: [registrationStudentsTool],
   subAgents: [],
   purpose: "Agente de secretária que faz a gestão de documentos e matrículas",
-  memory: sdrMemory,
   userContext: new Map([["environment", "production"]]),
 });
 

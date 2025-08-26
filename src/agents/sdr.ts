@@ -3,14 +3,6 @@ import { Agent, InMemoryStorage } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { SRDScript } from "../scripts/sdr-script";
 
-const sdrMemory = new InMemoryStorage({
-  // Optional: Limit the number of messages stored per conversation thread
-  storageLimit: 100, // Defaults to no limit if not specified
-
-  // Optional: Enable verbose debug logging from the memory provider
-  debug: true, // Defaults to false
-});
-
 export const SDRAgent = new Agent({
   name: "SOFIA",
   instructions: SRDScript,
@@ -19,7 +11,6 @@ export const SDRAgent = new Agent({
   tools: [],
   subAgents: [],
   purpose: "Agente de SRD",
-  memory: sdrMemory,
   userContext: new Map([["environment", "production"]]),
 });
 
