@@ -1,26 +1,11 @@
-
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: api-acerta-coopec
+  qdrant:
+    image: qdrant/qdrant:latest
     ports:
-      - "3141:3141"
-    # Carrega automaticamente todas as variáveis do arquivo .env
-    env_file:
-      - .env
-    environment:
-      # Se quiser sobrescrever algo do .env, pode fazer aqui
-      NODE_ENV: production
-      FILES_DIR: /data
-      LIBSQL_URL: file:/data/voltagent.db   # 👈 força LibSQL a usar arquivo no volume
-      LIBSQL_AUTH_TOKEN: ""                 # vazio para file:
-
-
+      - "6333:6333"   # REST
+      - "6334:6334"   # gRPC (opcional)
     volumes:
-      - arquivos_data:/data
-
-volumes:
-  arquivos_data:
-    name: arquivos_data
+      - ./qdrant_storage:/qdrant/storage
+    environment:
+      # QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY}  # habilite se quiser proteger
+      QDRANT__STORAGE__STRICT_MODE: "true"
