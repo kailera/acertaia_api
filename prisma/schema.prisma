@@ -81,12 +81,10 @@ model AgentsIa{
 }
 
 enum AgentIaTypes{
-  ENDOMARKETING
-  HR
-  SDV
-  FILES
+  SECRETARY
+  FINANCE
+  SDR
   LOGISTIC
-  FINANCES
 }
 
 
