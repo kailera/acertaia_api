@@ -1,6 +1,4 @@
-import { Agent, createWorkflowChain } from "@voltagent/core";
-import { VercelAIProvider } from "@voltagent/vercel-ai";
-import { openai } from "@ai-sdk/openai";
+import { createWorkflowChain } from "@voltagent/core";
 import { z } from "zod";
 
 // ==============================================================================
@@ -8,7 +6,7 @@ import { z } from "zod";
 // Concepts: Suspend/resume and step-level schemas
 //
 // Test Scenarios for VoltOps Platform
-// 
+//
 // Scenario 1: Small expense (auto-approved)
 // Input JSON:
 // {

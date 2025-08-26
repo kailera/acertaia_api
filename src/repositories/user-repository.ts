@@ -14,5 +14,18 @@ export const getUserbyEmail = async (email: string) => {
     where: {
       email,
     },
+    select: {
+      id: true,
+      role: true,
+      name: true,
+      email: true,
+      passwordHash: true,
+      whatsappNumbers: {
+        select: {
+          instance: true,
+          number: true,
+        },
+      },
+    },
   });
 };
