@@ -1,3 +1,4 @@
+import { $Enums } from "@prisma/client";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { startAgentTraining } from "../services/agent-trainning";
@@ -26,7 +27,10 @@ export const agentTrainEndpoints: CustomEndpointDefinition[] = [
 			startAgentTraining(job.id).catch(async (err: unknown) => {
 				await prisma.trainingJob.update({
 					where: { id: job.id },
-					data: { status: "FAILED", error: String(err).slice(0, 2000) },
+					data: {
+						status: $Enums.JobStatus.ERROR,
+						error: String(err).slice(0, 2000),
+					},
 				});
 			});
 
