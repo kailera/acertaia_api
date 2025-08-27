@@ -15,7 +15,7 @@ import {
 import { prisma } from "../utils/prisma";
 
 // biome-ignore lint/suspicious/noExplicitAny: generic tool mapping
-const TOOLS_BY_TYPE: Record<AgentType, Tool<any, any>[]> = {
+const TOOLS_BY_TYPE: Partial<Record<AgentType, Tool<any, any>[]>> = {
 	SECRETARIA: [registrationStudentsTool],
 	FINANCEIRO: [financeiroTool],
 	SDR: [sdrLeadTool],
