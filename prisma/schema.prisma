@@ -313,6 +313,20 @@ model AgentTag {
 
 
 
+// ---------- Times ----------
+model Team {
+  id       String       @id @default(cuid())
+  nome     String
+  ativo    Boolean      @default(true)
+  color    String?
+
+  membros  TeamMember[]
+  regras   Rule[]
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
 // Membros do time, com ordenação (prioridade)
 model TeamMember {
   id       Int     @id @default(autoincrement())
@@ -354,6 +368,8 @@ model TrainingJob {
   id        String    @id @default(cuid())
   agentId   String
   status    JobStatus @default(PENDING)
+  processed Int       @default(0)
+  total     Int       @default(0)
   meta      Json?
   error     String?
 

@@ -1,16 +1,17 @@
 import { prisma } from "../utils/prisma";
+import type { User, WhatsappNumbers } from "@prisma/client";
 
-interface UserInterface {
-  id?: string;
-  name?: string;
-  email?: string;
-  businessSubscription?: string;
-  passwordHash?: string;
-  role?: string;
-}
+export type UserWithWhatsapp = Pick<
+  User,
+  "id" | "name" | "email" | "passwordHash" | "role"
+> & {
+  whatsappNumbers: Pick<WhatsappNumbers, "instance" | "number"> | null;
+};
 
-export const getUserbyEmail = async (email: string) => {
-  return await prisma.user.findFirst({
+export const getUserbyEmail = async (
+  email: string
+): Promise<UserWithWhatsapp | null> => {
+  return prisma.user.findFirst({
     where: {
       email,
     },

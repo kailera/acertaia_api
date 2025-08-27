@@ -1,6 +1,7 @@
 import { CustomEndpointDefinition } from "@voltagent/core";
 import { prisma } from "../utils/prisma";
 import { startAgentTraining } from "../services/agent-trainning";
+import { JobStatus } from "@prisma/client";
 
 export const agentTrainEndpoints: CustomEndpointDefinition[] = [
   {
@@ -18,15 +19,15 @@ export const agentTrainEndpoints: CustomEndpointDefinition[] = [
       if (agent.ownerId !== userId)
         return c.json({ success: false, message: "forbidden" }, 403);
 
-      const job = await prisma.trainingJob.create({
-        data: { agentId: id, status: "PENDING" },
+        const job = await prisma.trainingJob.create({
+        data: { agentId: id, status: JobStatus.PENDING },
       });
 
       startAgentTraining(job.id).catch(async (err) => {
-        await prisma.trainingJob.update({
-          where: { id: job.id },
-          data: { status: "FAILED", error: String(err).slice(0, 2000) },
-        });
+          await prisma.trainingJob.update({
+            where: { id: job.id },
+            data: { status: JobStatus.ERROR, error: String(err).slice(0, 2000) },
+          });
       });
 
       return c.json({ success: true, jobId: job.id });

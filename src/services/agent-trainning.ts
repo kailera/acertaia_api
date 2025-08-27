@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { prisma } from "../utils/prisma";
 import { ensureCollection, qdrant, QDRANT_COLLECTION } from "../vector/qdrant";
 import { loadDocumentText } from "./doc-loader";
+import { JobStatus } from "@prisma/client";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 const EMBED_MODEL = process.env.EMBED_MODEL ?? "text-embedding-3-small";
@@ -18,13 +19,13 @@ function chunkText(s: string, size = 1800, overlap = 400) {
   return out;
 }
 
-export async function startAgentTraining(jobId: string) {
+export async function startAgentTraining(jobId: string): Promise<void> {
   await ensureCollection();
 
   // marca RUNNING
   const job = await prisma.trainingJob.update({
     where: { id: jobId },
-    data: { status: "RUNNING" },
+    data: { status: JobStatus.RUNNING },
   });
 
   const agent = await prisma.agent.findUnique({ where: { id: job.agentId } });
@@ -40,7 +41,11 @@ export async function startAgentTraining(jobId: string) {
 
   let total = 0,
     processed = 0;
-  const points: any[] = [];
+  const points: Array<{
+    id: string;
+    vector: number[];
+    payload: Record<string, unknown>;
+  }> = [];
 
   for (const d of docs) {
     const { text, kind, meta } = await loadDocumentText({
@@ -96,6 +101,6 @@ export async function startAgentTraining(jobId: string) {
 
   await prisma.trainingJob.update({
     where: { id: jobId },
-    data: { status: "SUCCEEDED", processed: total, total },
+    data: { status: JobStatus.DONE, processed: total, total },
   });
 }
