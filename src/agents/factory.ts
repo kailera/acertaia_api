@@ -1,7 +1,7 @@
-import { openai } from "@ai-sdk/openai";
 import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { makeQdrantRetriever } from "../retriever/qdrant-retriever";
+import { openai } from "../utils/openai";
 
 import type { AgentType } from "@prisma/client";
 import type { Tool } from "@voltagent/core";
