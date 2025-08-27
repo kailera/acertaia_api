@@ -17,7 +17,7 @@ export default function withCORS(handler: (c: Context) => Promise<Response>) {
 		);
 
 		if (c.req.method === "OPTIONS") {
-			return c.json({}, 204);
+			return new Response(null, { status: 204 });
 		}
 
 		return handler(c);
