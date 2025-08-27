@@ -201,13 +201,9 @@ enum AssessmentType {
 // ################## for me -> techinical#################
 enum AgentType {
   SECRETARIA
-  SDR
-  POS_VENDA
-  SUPORTE_TECNICO
-  VENDEDOR
   FINANCEIRO
+  SDR
   LOGISTICA
-  RH
 }
 
 enum AgentStatus {
@@ -263,6 +259,7 @@ model Agent {
   herdaPersonaDoPai Boolean         @default(false)
   color             String? // ex.: "#22c55e"
   saude             String? // "ok" | "med" | "bad" (texto livre ou trocar por enum se quiser)
+  isTemplate        Boolean         @default(false)
   // Hierarquia (self-relation)
   parentId          String?
   parent            Agent?          @relation("AgentChildren", fields: [parentId], references: [id], onDelete: SetNull)
@@ -789,7 +786,7 @@ model Lead {
   id          String     @id @default(cuid())
   firstName   String?
   lastName    String?
-  email       String
+  email       String?    @unique
   phone       String?
   consent     Boolean    @default(false)
   persona     Persona?
@@ -800,25 +797,8 @@ model Lead {
   capturedAt  DateTime   @default(now())
   status      LeadStatus @default(NEW)
 
-  campaignId String
+  campaignId String   @default("DEFAULT")
   campaign   Campaign @relation(fields: [campaignId], references: [id])
-=======
-  id             String    @id @default(cuid())
-  firstName      String?
-  lastName       String?
-  email          String? @unique
-  phone          String?
-  consent        Boolean   @default(false)
-  persona        Persona?
-  series         String?   // série/turno
-  interest       Interest?
-  utmSource      String?
-  utmCampaign    String?
-  capturedAt     DateTime  @default(now())
-  status         LeadStatus @default(NEW)
-
-  campaignId     String   @default("DEFAULT")
-  campaign       Campaign   @relation(fields: [campaignId], references: [id])
 
   interactions Interaction[]
 }

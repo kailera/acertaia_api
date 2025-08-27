@@ -3,38 +3,28 @@ import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { makeQdrantRetriever } from "../retriever/qdrant-retriever";
 
-import { financeiroTool } from "../tools/financeiro";
-import { logisticaTool } from "../tools/logistica";
-import { posVendaTool } from "../tools/pos-venda";
-import { rhTool } from "../tools/rh";
-import { sdrLeadTool } from "../tools/sdr";
-import { registrationStudentsTool } from "../tools/secretary";
-import { suporteTecnicoTool } from "../tools/suporte-tecnico";
-import { vendedorTool } from "../tools/vendedor";
+import type { AgentType } from "@prisma/client";
+import type { Tool } from "@voltagent/core";
+import {
+	financeiroTool,
+	logisticaTool,
+	registrationStudentsTool,
+	sdrLeadTool,
+} from "../tools";
 
 import { prisma } from "../utils/prisma";
 
-function toolsForType(tipo: string) {
-	switch (tipo) {
-		case "SECRETARIA":
-			return [registrationStudentsTool];
-		case "SDR":
-			return [sdrLeadTool];
-		case "POS_VENDA":
-			return [posVendaTool];
-		case "SUPORTE_TECNICO":
-			return [suporteTecnicoTool];
-		case "VENDEDOR":
-			return [vendedorTool];
-		case "FINANCEIRO":
-			return [financeiroTool];
-		case "LOGISTICA":
-			return [logisticaTool];
-		case "RH":
-			return [rhTool];
-		default:
-			return [];
-	}
+// biome-ignore lint/suspicious/noExplicitAny: generic tool mapping
+const TOOLS_BY_TYPE: Record<AgentType, Tool<any, any>[]> = {
+	SECRETARIA: [registrationStudentsTool],
+	FINANCEIRO: [financeiroTool],
+	SDR: [sdrLeadTool],
+	LOGISTICA: [logisticaTool],
+};
+
+// biome-ignore lint/suspicious/noExplicitAny: generic tool mapping
+function toolsForType(tipo: AgentType): Tool<any, any>[] {
+	return TOOLS_BY_TYPE[tipo] ?? [];
 }
 
 async function buildInstructions(agentId: string) {
