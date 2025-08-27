@@ -8,13 +8,9 @@ import { prisma } from "../utils/prisma";
 const mapTipo = (t: string): AgentType => {
 	const map = {
 		Secretária: "SECRETARIA",
-		SDR: "SDR",
-		"Pós-venda": "POS_VENDA",
-		"Suporte Técnico": "SUPORTE_TECNICO",
-		Vendedor: "VENDEDOR",
 		Financeiro: "FINANCEIRO",
+		SDR: "SDR",
 		Logística: "LOGISTICA",
-		RH: "RH",
 	} as const;
 	const res = map[t as keyof typeof map];
 	if (!res) throw new Error(`tipo inválido: ${t}`);
@@ -45,20 +41,12 @@ const tipoToLabel = (t: AgentType | string) => {
 	switch (String(t)) {
 		case "SECRETARIA":
 			return "Secretária";
-		case "SDR":
-			return "SDR";
-		case "POS_VENDA":
-			return "Pós-venda";
-		case "SUPORTE_TECNICO":
-			return "Suporte Técnico";
-		case "VENDEDOR":
-			return "Vendedor";
 		case "FINANCEIRO":
 			return "Financeiro";
+		case "SDR":
+			return "SDR";
 		case "LOGISTICA":
 			return "Logística";
-		case "RH":
-			return "RH";
 		default:
 			return "SDR";
 	}
