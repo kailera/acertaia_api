@@ -11,28 +11,28 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
-
-model User{
-  id String @default(cuid()) @id 
-  name String 
-  email String @unique
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
   passwordHash String
-  role Role
-  createdAt DateTime @default(now())
-  updateAte DateTime @updatedAt
+  role         Role
+  createdAt    DateTime @default(now())
+  updateAte    DateTime @updatedAt
 
-  aiAgents       Agent[]         
+  aiAgents        Agent[]
   whatsappNumbers WhatsappNumbers?
-  contacts Contacts[]
-  employee Employees[]
-  
+  contacts        Contacts[]
+  employee        Employees[]
+  Document        Document[]
+
   @@map("user")
-  Document Document[]
 }
-enum Role{
+
+enum Role {
   USER
   SUPERVISOR
   TEACHER
@@ -46,156 +46,156 @@ enum Role{
   LOGISTICA
 }
 
-
-model Employees{
-  id String @default(cuid())@id
-  userId String @unique
-  user User @relation(fields: [userId], references: [id])
-  position String
-  contract Contract
-  workload Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model Employees {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  position  String
+  contract  Contract
+  workload  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   teacher Teacher[]
+
   @@map("employees")
 }
-enum Contract{
+
+enum Contract {
   CLT
   PJ
 }
 
 //##############PEDAGÓGICO
-model Teacher{
-  id String @default(cuid())@id
-  employeeId String @unique
-  employee Employees @relation(fields: [employeeId], references: [id])
-  grade String
+model Teacher {
+  id             String    @id @default(cuid())
+  employeeId     String    @unique
+  employee       Employees @relation(fields: [employeeId], references: [id])
+  grade          String
   specialization String
-  createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updateAt       DateTime  @updatedAt
 
   functions TeacherFunctions[]
-  subject Subject[]
+  subject   Subject[]
+
   @@map("teacher")
 }
 
-enum TeacherFunctions{
+enum TeacherFunctions {
   HTCP
   SUPERVISOR
   SOCIAL_DEMAND
 }
 
 model Subject {
-  id        String       @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
-  teacherId String @unique
-  teacher   Teacher      @relation(fields: [teacherId], references: [id])
+  teacherId String   @unique
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   attendances Attendance[]
-  Assessment Assessment[]
+  Assessment  Assessment[]
 
   @@map("subject")
 }
 
 model Attendance {
-  id         String   @id @default(cuid())
-  date       DateTime // data da aula
-  status     AttendanceStatus // presente, falta, justificada etc.
+  id     String           @id @default(cuid())
+  date   DateTime // data da aula
+  status AttendanceStatus // presente, falta, justificada etc.
 
-  studentId  String
-  student    Student  @relation(fields: [studentId], references: [id])
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
 
-  subjectId  String
-  subject    Subject  @relation(fields: [subjectId], references: [id])
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@unique([studentId, subjectId, date]) // um registro por aluno/discip. e data
   @@map("attendance")
 }
 
-  enum AttendanceStatus {
+enum AttendanceStatus {
   PRESENT
   ABSENT
   JUSTIFIED
 }
 
-
-model Assessment { // provas, trabalhos, etc.
-  id          String       @id @default(cuid())
-  title       String       // ex: "Prova 1", "Trabalho de História"
+model Assessment {
+  id          String         @id @default(cuid())
+  title       String // ex: "Prova 1", "Trabalho de História"
   description String?
   type        AssessmentType
-  weight      Float        // peso da nota na média final
+  weight      Float // peso da nota na média final
   date        DateTime
 
-  subjectId   String
-  subject     Subject      @relation(fields: [subjectId], references: [id])
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
-  grades      Grade[]
+  grades Grade[]
+
   @@map("assessment")
 }
 
-model Grade { // nota do aluno em uma avaliação
+model Grade {
   id           String     @id @default(cuid())
-  score        Float      // nota obtida
+  score        Float // nota obtida
   studentId    String
   student      Student    @relation(fields: [studentId], references: [id])
   assessmentId String
   assessment   Assessment @relation(fields: [assessmentId], references: [id])
-  createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  createdAt    DateTime   @default(now())
+  updateAt     DateTime   @updatedAt
 
   @@unique([studentId, assessmentId]) // um aluno só tem uma nota por avaliação
   @@map("grade")
 }
 
-
-model StudentsPrograms{
-  id String @default(cuid()) @id
-  name String
-  descript String
-  type ProgramType
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model StudentsPrograms {
+  id                       String                     @id @default(cuid())
+  name                     String
+  descript                 String
+  type                     ProgramType
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  StudentProgramsRegisters StudentProgramsRegisters[]
 
   @@map("students_programs")
-  StudentProgramsRegisters StudentProgramsRegisters[]
 }
 
-enum ProgramType{
+enum ProgramType {
   SPORTS
   OLYMPICS
-
 }
 
 model StudentProgramsRegisters {
-  id         String   @id @default(cuid())
-  studentId  String
-  programId  String
+  id        String @id @default(cuid())
+  studentId String
+  programId String
 
-  student    Student  @relation(fields: [studentId], references: [id])
-  program    StudentsPrograms  @relation(fields: [programId], references: [id])
+  student Student          @relation(fields: [studentId], references: [id])
+  program StudentsPrograms @relation(fields: [programId], references: [id])
 
-  role       String?  // ex: participante, medalhista, classificado
-  result     String?  // ex: ouro, prata, menção honrosa
+  role      String? // ex: participante, medalhista, classificado
+  result    String? // ex: ouro, prata, menção honrosa
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@unique([studentId, programId]) // aluno só pode estar uma vez no mesmo programa
   @@map("student_programs_registers")
 }
 
 enum AssessmentType {
-  TEST       // prova
+  TEST // prova
   ASSIGNMENT // trabalho
-  QUIZ       // teste rápido
-  FINAL      // avaliação final
+  QUIZ // teste rápido
+  FINAL // avaliação final
 }
 
 // ################## for me -> techinical#################
@@ -241,44 +241,44 @@ enum JobStatus {
 
 // ---------- Configuração Global (Supervisor) ----------
 model SupervisorConfig {
-  id             Int      @id @default(1) // um único registro
-  nome           String   @default("Supervisor")
-  online         Boolean  @default(false) // status “online/offline” do header
-  instrucoes     String?  // texto longo mostrado no card
-  slaMin         Int      @default(5)     // playbook: SLA
-  fallbackAtivo  Boolean  @default(true)  // playbook: fallback
-  horariosJson   Json?    // janelas/agenda globais (ex.: { dias: [...], janelas: [...] })
+  id            Int     @id @default(1) // um único registro
+  nome          String  @default("Supervisor")
+  online        Boolean @default(false) // status “online/offline” do header
+  instrucoes    String? // texto longo mostrado no card
+  slaMin        Int     @default(5) // playbook: SLA
+  fallbackAtivo Boolean @default(true) // playbook: fallback
+  horariosJson  Json? // janelas/agenda globais (ex.: { dias: [...], janelas: [...] })
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // ---------- Agente / Sub-agente ----------
 model Agent {
-  id                      String        @id @default(cuid())
-  nome                    String
-  tipo                    AgentType
-  status                  AgentStatus   @default(ATIVO)
-  persona                 String?
-  herdaPersonaDoPai       Boolean       @default(false)
-  color                   String?       // ex.: "#22c55e"
-  saude                   String?       // "ok" | "med" | "bad" (texto livre ou trocar por enum se quiser)
+  id                String          @id @default(cuid())
+  nome              String
+  tipo              AgentType
+  status            AgentStatus     @default(ATIVO)
+  persona           String?
+  herdaPersonaDoPai Boolean         @default(false)
+  color             String? // ex.: "#22c55e"
+  saude             String? // "ok" | "med" | "bad" (texto livre ou trocar por enum se quiser)
   // Hierarquia (self-relation)
-  parentId                String?
-  parent                  Agent?        @relation("AgentChildren", fields: [parentId], references: [id], onDelete: SetNull)
-  children                Agent[]       @relation("AgentChildren")
-  ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parentId          String?
+  parent            Agent?          @relation("AgentChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children          Agent[]         @relation("AgentChildren")
+  ownerId           String
+  owner             User            @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Relações auxiliares
-  canais                  AgentChannel[]
-  tags                    AgentTag[]
-  teams                   TeamMember[]
-  rulesFrom               Rule[]        @relation("RuleFrom")
-  rulesTo                 Rule[]        @relation("RuleTo")
-  trainingJobs            TrainingJob[]
-  documents AgentDocument[]   // relação N:N via pivot
-  createdAt               DateTime      @default(now())
-  updatedAt               DateTime      @updatedAt
+  canais            AgentChannel[]
+  tags              AgentTag[]
+  teams             TeamMember[]
+  rulesFrom         Rule[]          @relation("RuleFrom")
+  rulesTo           Rule[]          @relation("RuleTo")
+  trainingJobs      TrainingJob[]
+  documents         AgentDocument[] // relação N:N via pivot
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@index([parentId])
   @@index([tipo])
@@ -291,11 +291,11 @@ model AgentChannel {
   agentId String
   channel Channel
   primary Boolean? // opcional: marcar canal preferido
-  handle  String?  // ex.: @usuario, número, etc.
+  handle  String? // ex.: @usuario, número, etc.
 
-  agent   Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  @@id([agentId, channel])                // um canal por agente
+  @@id([agentId, channel]) // um canal por agente
   @@index([channel])
 }
 
@@ -305,35 +305,33 @@ model AgentTag {
   agentId String
   tag     String
 
-  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@unique([agentId, tag])
   @@index([tag])
 }
 
-
-
 model Team {
-  id        String      @id @default(cuid())
+  id        String   @id @default(cuid())
   nome      String
-  ativo     Boolean     @default(true)
+  ativo     Boolean  @default(true)
   color     String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  membros   TeamMember[]
-  regras    Rule[]
+  membros TeamMember[]
+  regras  Rule[]
 }
 
 // Membros do time, com ordenação (prioridade)
 model TeamMember {
-  id       Int     @id @default(autoincrement())
-  teamId   String
-  agentId  String
-  pos      Int     @default(0) // ordem do agente no time
+  id      Int    @id @default(autoincrement())
+  teamId  String
+  agentId String
+  pos     Int    @default(0) // ordem do agente no time
 
-  team     Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  agent    Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  team  Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, agentId])
   @@index([teamId, pos])
@@ -342,16 +340,16 @@ model TeamMember {
 // ---------- Regras / Fluxo ----------
 model Rule {
   id       String   @id @default(cuid())
-  teamId   String?  // regra pode ser global ao time (opcional)
-  deId     String   // from agent
-  paraId   String   // to agent
+  teamId   String? // regra pode ser global ao time (opcional)
+  deId     String // from agent
+  paraId   String // to agent
   tipo     RuleKind
-  condicao String?  // ex.: "Sem agenda", "BANT: orçamento OK" etc.
-  ordem    Int?     // ordenação entre regras semelhantes
+  condicao String? // ex.: "Sem agenda", "BANT: orçamento OK" etc.
+  ordem    Int? // ordenação entre regras semelhantes
 
-  team     Team?    @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  de       Agent    @relation("RuleFrom", fields: [deId], references: [id], onDelete: Cascade)
-  para     Agent    @relation("RuleTo", fields: [paraId], references: [id], onDelete: Cascade)
+  team Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  de   Agent @relation("RuleFrom", fields: [deId], references: [id], onDelete: Cascade)
+  para Agent @relation("RuleTo", fields: [paraId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -363,47 +361,45 @@ model Rule {
 
 // ---------- Jobs de Treino (para ação “Treinar”) ----------
 model TrainingJob {
-  id        String    @id @default(cuid())
-  agentId   String
-  status    JobStatus @default(PENDING)
-  meta      Json?
-  error     String?
+  id      String    @id @default(cuid())
+  agentId String
+  status  JobStatus @default(PENDING)
+  meta    Json?
+  error   String?
 
-  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([agentId, status])
 }
 
-
-
-
 // #################### Alunos e relacionados ###########################
 model Student {
-  id          String        @id @default(cuid())
+  id          String      @id @default(cuid())
   firstName   String
   lastName    String?
   birth       String
   scholarship Scholarship
 
   // Relação com Sponsor através da tabela Responsible
-  responsibles Responsible[]
-  documents DocumentStudents[]
-  registration Registration?
-  schoolRecord SchoolRecord[]
-  transference Transference?
+  responsibles  Responsible[]
+  documents     DocumentStudents[]
+  registration  Registration?
+  schoolRecord  SchoolRecord[]
+  transference  Transference?
   scheduleSpace ScheduleSpace[]
-  attendance Attendance[]
-  createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  attendance    Attendance[]
+  createdAt     DateTime           @default(now())
+  updateAt      DateTime           @updatedAt
 
-  Grade Grade[] 
+  Grade                    Grade[]
   StudentProgramsRegisters StudentProgramsRegisters[]
+
   @@map("students")
 }
 
-enum Scholarship{
+enum Scholarship {
   SPORTS
   RESEARCH
   SOCIAL_DEMAND
@@ -412,34 +408,38 @@ enum Scholarship{
 }
 
 model Sponsor {
-  id          String        @id @default(cuid())
-  firstName   String
-  lastName    String?
-  birth       String
-  isMain      Boolean
+  id        String  @id @default(cuid())
+  firstName String
+  lastName  String?
+  birth     String
+  isMain    Boolean
+  email     String?
+  phone     String?
 
   // Relação com Student através da tabela Responsible
-  responsibles Responsible[]
-  documents DocumentSponsor[]
-  plan Plans?
+  responsibles   Responsible[]
+  documents      DocumentSponsor[]
+  plan           Plans?
   ordersUniforms OrdersUniforms[]
+
   @@map("sponsor")
 }
 
 model Responsible {
   studentId String
-  sponsorId String @unique
-  relation  Relation   // <- grau de parentesco (pai, mãe, tio, etc.)
+  sponsorId String   @unique
+  relation  Relation // <- grau de parentesco (pai, mãe, tio, etc.)
 
-  student   Student  @relation(fields: [studentId], references: [id])
-  sponsor   Sponsor  @relation(fields: [sponsorId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+  sponsor Sponsor @relation(fields: [sponsorId], references: [id])
 
   registration Registration?
+
   @@id([studentId, sponsorId]) // chave composta
   @@map("responsibles")
 }
 
-enum Relation{
+enum Relation {
   PAI
   AVÔ
   AVÓ
@@ -448,9 +448,9 @@ enum Relation{
 }
 
 model DocumentStudents {
-  id        String   @id @default(cuid())
-  type      String   // ex.: RG, CPF, Histórico Escolar
-  path      String   // caminho/URL para o arquivo
+  id         String   @id @default(cuid())
+  type       String // ex.: RG, CPF, Histórico Escolar
+  path       String // caminho/URL para o arquivo
   uploadedAt DateTime @default(now())
 
   studentId String
@@ -460,38 +460,37 @@ model DocumentStudents {
 }
 
 model DocumentSponsor {
-  id        String   @id @default(cuid())
-  type      String
-  path      String
+  id         String   @id @default(cuid())
+  type       String
+  path       String
   uploadedAt DateTime @default(now())
 
   sponsorId String
-  sponsor   Sponsor @relation(fields: [sponsorId], references: [id])
+  sponsor   Sponsor  @relation(fields: [sponsorId], references: [id])
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@map("sponsor_documents")
 }
 
-
 // ===== NOVO: catálogo único de documentos compartilháveis
 model Document {
-  id        String   @id @default(cuid())
-  ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  id      String @id @default(cuid())
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  name      String
-  kind      DocKind           // script | csv | media | rule | other
-  mimeType  String?
-  url       String?           // para CSV/mídia/PDF (storage)
-  body      String?           // para scripts/regras (texto/markdown)
-  tags      Json?             // ["vendas","follow-up",...]
-  meta      Json?             // livre: {enc,delim,hasHeader,sample,stats,canal,mediaKind,...}
-  status    String?           // opcional: "rascunho" | "pronto" | "revisão"
-  perm      String?           // opcional: "global" | "limitado"
+  name     String
+  kind     DocKind // script | csv | media | rule | other
+  mimeType String?
+  url      String? // para CSV/mídia/PDF (storage)
+  body     String? // para scripts/regras (texto/markdown)
+  tags     Json? // ["vendas","follow-up",...]
+  meta     Json? // livre: {enc,delim,hasHeader,sample,stats,canal,mediaKind,...}
+  status   String? // opcional: "rascunho" | "pronto" | "revisão"
+  perm     String? // opcional: "global" | "limitado"
 
   // back-relation para a ligação N:N
-  agents    AgentDocument[]
+  agents AgentDocument[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -500,210 +499,209 @@ model Document {
   @@index([kind])
   @@index([status])
 }
-enum DocKind { 
-  SCRIPT
-  CSV 
-  MEDIA 
-  RULE 
-  OTHER 
-}
 
+enum DocKind {
+  SCRIPT
+  CSV
+  MEDIA
+  RULE
+  OTHER
+}
 
 model AgentDocument {
-  id          String   @id @default(cuid())
+  id String @id @default(cuid())
 
   // 👇 CHAVE ESTRANGEIRA PARA AMBOS
-  agentId     String
-  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  agentId String
+  agent   Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-  documentId  String
-  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   // 👇 informações do vínculo (úteis para sua UI de “mapear por agente”)
-  role        AgentDocRole?   // PRIMARY | EXTRA | CSV | MEDIA | RULE_OVERRIDE
-  notes       String?
-  assignedAt  DateTime @default(now())
+  role       AgentDocRole? // PRIMARY | EXTRA | CSV | MEDIA | RULE_OVERRIDE
+  notes      String?
+  assignedAt DateTime      @default(now())
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("agent_documents")     // mantém o nome físico que você já usa
+  @@unique([agentId, documentId, role]) // evita duplicado do mesmo doc no mesmo papel
   @@index([agentId])
   @@index([documentId])
-  @@unique([agentId, documentId, role]) // evita duplicado do mesmo doc no mesmo papel
+  @@map("agent_documents") // mantém o nome físico que você já usa
 }
-enum AgentDocRole { 
-  PRIMARY 
-  EXTRA 
-  CSV 
-  MEDIA 
-  RULE_OVERRIDE 
-  }
 
+enum AgentDocRole {
+  PRIMARY
+  EXTRA
+  CSV
+  MEDIA
+  RULE_OVERRIDE
+}
 
-model Registration{
-  id String @default(cuid())@id
-  studentId String @unique
-  student Student @relation(fields: [studentId], references: [id])
-  responsibleId String @unique
-  responsible Responsible @relation(fields: [responsibleId], references: [sponsorId])
+model Registration {
+  id                  String      @id @default(cuid())
+  studentId           String      @unique
+  student             Student     @relation(fields: [studentId], references: [id])
+  responsibleId       String      @unique
+  responsible         Responsible @relation(fields: [responsibleId], references: [sponsorId])
   isFirstRegistration Boolean
-  createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
-  
+  createdAt           DateTime    @default(now())
+  updateAt            DateTime    @updatedAt
+
   @@map("registration")
 }
 
 model SchoolRecord {
-  id         String   @id @default(cuid())
-  year       Int      // ano letivo (ex: 2024)
-  grade      String   // série/etapa (ex: 9º ano, 2º médio)
-  average    Float?   // média geral do aluno
-  status     String?  // aprovado, reprovado, em andamento
-  notes      String?  // observações do histórico
-  filePath   String?  // caminho para PDF do histórico (opcional)
+  id       String  @id @default(cuid())
+  year     Int // ano letivo (ex: 2024)
+  grade    String // série/etapa (ex: 9º ano, 2º médio)
+  average  Float? // média geral do aluno
+  status   String? // aprovado, reprovado, em andamento
+  notes    String? // observações do histórico
+  filePath String? // caminho para PDF do histórico (opcional)
 
-  studentId  String
-  student    Student  @relation(fields: [studentId], references: [id])
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("school_records")
 }
 
-model Transference{
-  id String @id @default(cuid())
-  studentId String @unique
-  student Student @relation(fields: [studentId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model Transference {
+  id        String   @id @default(cuid())
+  studentId String   @unique
+  student   Student  @relation(fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("transference")
 }
- 
+
 //########################### Financeiro ########################
 
-model Plans{
-  id String @default(cuid()) @id
-  sponsorId String @unique
-  sponsor Sponsor @relation(fields: [sponsorId], references: [id])
-  plan Plan
-  agreement Agreement? @default(NONE)
+model Plans {
+  id          String     @id @default(cuid())
+  sponsorId   String     @unique
+  sponsor     Sponsor    @relation(fields: [sponsorId], references: [id])
+  plan        Plan
+  agreement   Agreement? @default(NONE)
   negotiation String?
-  paymentDate DateTime 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  paymentDate DateTime
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
   payment Payment[]
+
   @@map("plans")
 }
 
-enum Agreement{
+enum Agreement {
   NONE
   STAR
   GREYHOUND
   MONEYSAVER
 }
 
-enum Plan{
+enum Plan {
   STANDART
   SILVER
   GOLD
 }
 
 model Payment {
-  id         String   @id @default(cuid())
-  amount     Float    // valor pago
-  status     PayStatus   // ex.: "PENDING", "PAID", "CANCELED"
-  method     PayMethod?  // ex.: "PIX", "Boleto", "Cartão"
-  paidAt     DateTime? // data em que foi pago
-  dueDate    DateTime  // data de vencimento
-  notes      String?
+  id      String     @id @default(cuid())
+  amount  Float // valor pago
+  status  PayStatus // ex.: "PENDING", "PAID", "CANCELED"
+  method  PayMethod? // ex.: "PIX", "Boleto", "Cartão"
+  paidAt  DateTime? // data em que foi pago
+  dueDate DateTime // data de vencimento
+  notes   String?
 
-  planId     String
-  plan       Plans    @relation(fields: [planId], references: [id])
+  planId String
+  plan   Plans  @relation(fields: [planId], references: [id])
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("payments")
 }
 
-enum PayStatus{
+enum PayStatus {
   PENDING
   PAID
   CANCELED
 }
-enum PayMethod{
+
+enum PayMethod {
   PIX
   BOLETO
   CARTAO
 }
 
-model Boletos{
-  id String @default(cuid()) @id
+model Boletos {
+  id        String       @id @default(cuid())
   typedLine String
-  expiredIn DateTime 
-  status BoletoStatus
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  expiredIn DateTime
+  status    BoletoStatus
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   @@map("boletos")
 }
 
-enum BoletoStatus{
+enum BoletoStatus {
   PAIED
   PENDENT
   EXPIRED
 }
 
-
 //#################### Logistica ####################
 
-model Uniforms{
-  id String @default(cuid())@id
-  title String
+model Uniforms {
+  id       String  @id @default(cuid())
+  title    String
   descript String?
   quantity Int
-  size Int
-  price Float
+  size     Int
+  price    Float
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   ordersUniforms OrdersUniforms[]
+
   @@map("uniforms")
 }
 
-
-model OrdersUniforms{
-  id String @default(cuid())
-  sponsorId String @unique // responsável pelo aluno, mas aluno pode pedir
-  sponsor Sponsor @relation(fields: [sponsorId], references: [id])
-  uniformId String @unique
-  uniform Uniforms @relation(fields: [uniformId], references: [id])
-  quantity Int
-  amount Float
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model OrdersUniforms {
+  id        String   @default(cuid())
+  sponsorId String   @unique // responsável pelo aluno, mas aluno pode pedir
+  sponsor   Sponsor  @relation(fields: [sponsorId], references: [id])
+  uniformId String   @unique
+  uniform   Uniforms @relation(fields: [uniformId], references: [id])
+  quantity  Int
+  amount    Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("orders_uniforms")
 }
 
-
-
 //################ infraestrutura #######################
-model Spaces{
-  id String @default(cuid())@id
-  name String
-  type SpacesType
+model Spaces {
+  id            String          @id @default(cuid())
+  name          String
+  type          SpacesType
   scheduleSpace ScheduleSpace[]
-  createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  createdAt     DateTime        @default(now())
+  updateAt      DateTime        @updatedAt
 }
 
-enum SpacesType{
+enum SpacesType {
   ROOM
   MULTISPOSTS
   INFOLAB
@@ -711,58 +709,58 @@ enum SpacesType{
   DEBATEROOM
 }
 
-model ScheduleSpace{
-  id String @default(cuid())@id
-  studentId String @unique
-  student Student @relation(fields: [studentId], references: [id])
-  spaceId String @unique
-  space Spaces @relation(fields: [spaceId], references: [id])
-createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
-  
+model ScheduleSpace {
+  id        String   @id @default(cuid())
+  studentId String   @unique
+  student   Student  @relation(fields: [studentId], references: [id])
+  spaceId   String   @unique
+  space     Spaces   @relation(fields: [spaceId], references: [id])
+  createdAt DateTime @default(now())
+  updateAt  DateTime @updatedAt
+
   @@map("schedule_space")
 }
-model WhatsappNumbers{
-  id String @default(cuid()) @id
-  number String? 
-  userId  String @unique
-  user User @relation(fields: [userId], references: [id])
-  instance String?
+
+model WhatsappNumbers {
+  id        String   @id @default(cuid())
+  number    String?
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  instance  String?
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@map("whatsapp_numbers")
 }
 
-model Contacts{
-  id String @default(cuid())@id
-  name String
-  number String 
-  userId String
-  user User @relation(fields: [userId], references: [id])
+model Contacts {
+  id        String   @id @default(cuid())
+  name      String
+  number    String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt  DateTime @updatedAt
 
   @@map("contacts")
 }
 
 model Messages {
-  id String @default(cuid())@id
+  id        String    @id @default(cuid())
   remoteJid String?
-  message String?
-  sendAt DateTime?
+  message   String?
+  sendAt    DateTime?
   messageId String?
-  fromMe Boolean?
-  pushName String?
-  instance String
-  createAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  fromMe    Boolean?
+  pushName  String?
+  instance  String
+  createAt  DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@map("messages")
 }
 
-
-enum MessageSender{
+enum MessageSender {
   USER
   CLIENT
   AGENT_IA
@@ -772,42 +770,40 @@ enum MessageSender{
 model Campaign {
   id          String    @id @default(cuid())
   name        String
-  channel     Channel   // Meta, Google, QR Code etc.
+  channel     Channel // Meta, Google, QR Code etc.
   startDate   DateTime
   endDate     DateTime?
   active      Boolean   @default(true)
   description String?
 
-  leads       Lead[]    // leads captados por essa campanha
-  contents    Content[] // materiais enviados aos leads
+  leads    Lead[] // leads captados por essa campanha
+  contents Content[] // materiais enviados aos leads
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   CampaignReport CampaignReport[]
 }
 
-
-
 model Lead {
-  id             String    @id @default(cuid())
-  firstName      String?
-  lastName       String?
-  email          String
-  phone          String?
-  consent        Boolean   @default(false)
-  persona        Persona?
-  series         String?   // série/turno
-  interest       Interest?
-  utmSource      String?
-  utmCampaign    String?
-  capturedAt     DateTime  @default(now())
-  status         LeadStatus @default(NEW)
+  id          String     @id @default(cuid())
+  firstName   String?
+  lastName    String?
+  email       String
+  phone       String?
+  consent     Boolean    @default(false)
+  persona     Persona?
+  series      String? // série/turno
+  interest    Interest?
+  utmSource   String?
+  utmCampaign String?
+  capturedAt  DateTime   @default(now())
+  status      LeadStatus @default(NEW)
 
-  campaignId     String
-  campaign       Campaign   @relation(fields: [campaignId], references: [id])
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
 
-  interactions   Interaction[]
+  interactions Interaction[]
 }
 
 enum LeadStatus {
@@ -831,15 +827,15 @@ enum Interest {
 }
 
 model Content {
-  id          String    @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
   type        ContentType
-  url         String?   // link do material
+  url         String? // link do material
   description String?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime    @default(now())
 
-  campaignId  String
-  campaign    Campaign   @relation(fields: [campaignId], references: [id])
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
 
   Interaction Interaction[]
 }
@@ -853,13 +849,13 @@ enum ContentType {
 }
 
 model Interaction {
-  id        String    @id @default(cuid())
+  id        String          @id @default(cuid())
   leadId    String
-  lead      Lead      @relation(fields: [leadId], references: [id])
+  lead      Lead            @relation(fields: [leadId], references: [id])
   contentId String?
-  content   Content?  @relation(fields: [contentId], references: [id])
+  content   Content?        @relation(fields: [contentId], references: [id])
   type      InteractionType
-  timestamp DateTime  @default(now())
+  timestamp DateTime        @default(now())
 }
 
 enum InteractionType {
@@ -870,19 +866,19 @@ enum InteractionType {
 }
 
 model CampaignReport {
-  id            String   @id @default(cuid())
-  campaignId    String
-  campaign      Campaign @relation(fields: [campaignId], references: [id])
-  weekStart     DateTime
-  weekEnd       DateTime
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  weekStart  DateTime
+  weekEnd    DateTime
 
-  ctr           Float?   // Click-through rate
-  cvr           Float?   // Conversion rate
-  cpl           Float?   // Cost per lead
-  lql           Float?   // % leads qualificados
-  conversionRate Float?  // taxa de conversão geral
-  cac           Float?   // custo de aquisição por cliente
+  ctr            Float? // Click-through rate
+  cvr            Float? // Conversion rate
+  cpl            Float? // Cost per lead
+  lql            Float? // % leads qualificados
+  conversionRate Float? // taxa de conversão geral
+  cac            Float? // custo de aquisição por cliente
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
