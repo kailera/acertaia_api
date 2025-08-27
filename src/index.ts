@@ -9,6 +9,7 @@ import { FinanceiroAgent } from "./agents/financeiro";
 import { LogisticaAgent } from "./agents/logistica";
 import { SDRAgent } from "./agents/sdr";
 import { SecretaryAgent } from "./agents/secretary";
+import { agentTrainEndpoints } from "./endpoints/agent-trainning";
 import { agentEndpoints } from "./endpoints/agents";
 import { agentDocumentEndpoints } from "./endpoints/agents-docs";
 import { documentEndpoints } from "./endpoints/documents";
@@ -41,6 +42,7 @@ registerCustomEndpoints(documentEndpoints);
 registerCustomEndpoints(agentDocumentEndpoints);
 registerCustomEndpoints(uploadDirectEndpoints);
 registerCustomEndpoints(fileEndpoints);
+registerCustomEndpoints(agentTrainEndpoints);
 
 new VoltAgent({
 	agents: {
