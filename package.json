@@ -44,6 +44,9 @@
     "tsx": "^4.20.5",
     "typescript": "^5.7.3"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "engines": {
     "node": ">=20.0.0"
   }
