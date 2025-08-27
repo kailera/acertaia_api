@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 // api/documents.endpoints.ts
 import type { Context } from "hono";
@@ -20,7 +21,7 @@ export const documentEndpoints: CustomEndpointDefinition[] = [
 				return c.json({ success: false, message: "missing userId" }, 401);
 
 			const kindLabel = c.req.query("kind"); // ?kind=script|csv|media|rule|other
-			const where: { ownerId: string; kind?: string } = { ownerId: userId };
+			const where: Prisma.DocumentWhereInput = { ownerId: userId };
 			if (kindLabel) where.kind = kindFromLabel(String(kindLabel));
 
 			const rows = await prisma.document.findMany({
@@ -70,10 +71,10 @@ export const documentEndpoints: CustomEndpointDefinition[] = [
 					mimeType: p.mimeType,
 					url: p.url,
 					body: p.body,
-					tags: p.tags as unknown,
+					tags: p.tags as Prisma.InputJsonValue,
 					status: p.status,
 					perm: p.perm,
-					meta: p.meta as unknown,
+					meta: p.meta as Prisma.InputJsonValue,
 				},
 			});
 
@@ -143,10 +144,10 @@ export const documentEndpoints: CustomEndpointDefinition[] = [
 					...(p.mimeType ? { mimeType: p.mimeType } : {}),
 					...(p.url ? { url: p.url } : {}),
 					...(p.body !== undefined ? { body: p.body } : {}),
-					...(p.tags ? { tags: p.tags as unknown } : {}),
+					...(p.tags ? { tags: p.tags as Prisma.InputJsonValue } : {}),
 					...(p.status ? { status: p.status } : {}),
 					...(p.perm ? { perm: p.perm } : {}),
-					...(p.meta ? { meta: p.meta as unknown } : {}),
+					...(p.meta ? { meta: p.meta as Prisma.InputJsonValue } : {}),
 				},
 			});
 
