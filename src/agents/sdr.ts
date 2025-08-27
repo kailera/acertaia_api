@@ -1,8 +1,8 @@
-import { openai } from "@ai-sdk/openai";
 import { Agent, InMemoryStorage } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { scriptGeral } from "../scripts/geral";
 import { SRDScript } from "../scripts/sdr-script";
+import { openai } from "../utils/openai";
 
 export const SDRAgent = new Agent({
 	name: "SOFIA",

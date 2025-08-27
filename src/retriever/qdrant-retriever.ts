@@ -3,15 +3,10 @@ import {
 	BaseRetriever,
 	type RetrieveOptions,
 } from "@voltagent/core";
-import OpenAI from "openai";
+import { EMBED_MODEL, openaiClient } from "../utils/openai";
 import { QDRANT_COLLECTION, qdrant } from "../vector/qdrant";
 
-const openaiApiKey = process.env.OPENAI_API_KEY;
-if (!openaiApiKey) {
-	throw new Error("OPENAI_API_KEY is not set");
-}
-const openai = new OpenAI({ apiKey: openaiApiKey });
-const EMBED_MODEL = process.env.EMBED_MODEL ?? "text-embedding-3-small";
+const openai = openaiClient;
 
 async function embed(text: string) {
 	const r = await openai.embeddings.create({ model: EMBED_MODEL, input: text });

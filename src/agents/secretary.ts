@@ -1,4 +1,3 @@
-import { openai } from "@ai-sdk/openai";
 import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { scriptGeral } from "../scripts/geral";
@@ -8,6 +7,7 @@ import {
 	secretariaListRequirements,
 	secretariaUpsertEnrollment,
 } from "../tools";
+import { openai } from "../utils/openai";
 
 export const SecretaryAgent = new Agent({
 	name: "Anne",

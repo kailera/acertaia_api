@@ -1,15 +1,10 @@
 import { $Enums } from "@prisma/client";
-import OpenAI from "openai";
+import { EMBED_MODEL, openaiClient } from "../utils/openai";
 import { prisma } from "../utils/prisma";
 import { QDRANT_COLLECTION, ensureCollection, qdrant } from "../vector/qdrant";
 import { loadDocumentText } from "./doc-loader";
 
-const openaiApiKey = process.env.OPENAI_API_KEY;
-if (!openaiApiKey) {
-	throw new Error("OPENAI_API_KEY is not set");
-}
-const openai = new OpenAI({ apiKey: openaiApiKey });
-const EMBED_MODEL = process.env.EMBED_MODEL ?? "text-embedding-3-small";
+const openai = openaiClient;
 
 function chunkText(s: string, size = 1800, overlap = 400) {
 	if (!s) return [];
