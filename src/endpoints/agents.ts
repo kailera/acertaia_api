@@ -1,4 +1,4 @@
-import type { AgentStatus, AgentType } from "@prisma/client";
+import type { AgentStatus, AgentType, Prisma } from "@prisma/client";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -82,6 +82,13 @@ const AgentCreatePayload = z.object({
 	herdaPersonaDoPai: z.boolean().optional(),
 	canais: z.array(z.string()).optional(), // ["WhatsApp", ...]
 	userId: z.string().optional(), // só como fallback; prefira header/sessão
+});
+
+const AgentUpdatePayload = AgentCreatePayload.partial();
+const AgentStatusPayload = z.object({ status: z.string() });
+const AgentChatPayload = z.object({
+	input: z.string().min(1),
+	conversationId: z.string().optional(),
 });
 
 export const agentEndpoints: CustomEndpointDefinition[] = [
@@ -179,5 +186,190 @@ export const agentEndpoints: CustomEndpointDefinition[] = [
 			return c.json({ success: true, data: created }, 201);
 		},
 		description: "[privada] cria agente",
+	},
+
+	// ===== PUT /api/agents/:id (atualiza) =====
+	{
+		path: "/api/agents/:id",
+		method: "put" as const,
+		handler: async (c: Context): Promise<Response> => {
+			const userId = c.req.header("x-user-id");
+			if (!userId)
+				return c.json({ success: false, message: "missing userId" }, 401);
+
+			const id = c.req.param("id");
+			const body = await c.req.json();
+			const parsed = AgentUpdatePayload.safeParse(body);
+			if (!parsed.success)
+				return c.json({ success: false, message: parsed.error.message }, 400);
+			const p = parsed.data;
+
+			const exists = await prisma.agent.findFirst({
+				where: { id, ownerId: userId },
+			});
+			if (!exists) return c.json({ success: false, message: "not found" }, 404);
+
+			const data: Prisma.AgentUncheckedUpdateInput = {};
+			try {
+				if (p.nome) data.nome = p.nome;
+				if (p.tipo) data.tipo = mapTipo(p.tipo);
+				if (p.status) data.status = mapStatus(p.status);
+				if (p.parentId !== undefined) data.parentId = p.parentId ?? null;
+				if (p.persona !== undefined) data.persona = p.persona ?? null;
+				if (p.herdaPersonaDoPai !== undefined)
+					data.herdaPersonaDoPai = !!p.herdaPersonaDoPai;
+			} catch (e: unknown) {
+				const message = e instanceof Error ? e.message : "Unknown error";
+				return c.json({ success: false, message }, 400);
+			}
+
+			const updated = await prisma.agent.update({ where: { id }, data });
+
+			if (p.canais) {
+				await prisma.agentChannel.deleteMany({ where: { agentId: id } });
+				if (p.canais.length) {
+					await prisma.agentChannel.createMany({
+						data: p.canais.map((label) => ({
+							agentId: id,
+							channel: mapChannel(label),
+						})),
+						skipDuplicates: true,
+					});
+				}
+			}
+
+			return c.json({ success: true, data: updated });
+		},
+		description: "[privada] atualiza agente",
+	},
+
+	// ===== PATCH /api/agents/:id/status (ativa/pausa) =====
+	{
+		path: "/api/agents/:id/status",
+		method: "patch" as const,
+		handler: async (c: Context): Promise<Response> => {
+			const userId = c.req.header("x-user-id");
+			if (!userId)
+				return c.json({ success: false, message: "missing userId" }, 401);
+
+			const id = c.req.param("id");
+			const body = await c.req.json();
+			const parsed = AgentStatusPayload.safeParse(body);
+			if (!parsed.success)
+				return c.json({ success: false, message: parsed.error.message }, 400);
+
+			const exists = await prisma.agent.findFirst({
+				where: { id, ownerId: userId },
+			});
+			if (!exists) return c.json({ success: false, message: "not found" }, 404);
+
+			const statusEnum = mapStatus(parsed.data.status);
+			await prisma.agent.update({
+				where: { id },
+				data: { status: statusEnum },
+			});
+
+			return c.json({ success: true });
+		},
+		description: "[privada] altera status do agente",
+	},
+
+	// ===== DELETE /api/agents/:id (remove) =====
+	{
+		path: "/api/agents/:id",
+		method: "delete" as const,
+		handler: async (c: Context): Promise<Response> => {
+			const userId = c.req.header("x-user-id");
+			if (!userId)
+				return c.json({ success: false, message: "missing userId" }, 401);
+
+			const id = c.req.param("id");
+			const exists = await prisma.agent.findFirst({
+				where: { id, ownerId: userId },
+			});
+			if (!exists) return c.json({ success: false, message: "not found" }, 404);
+
+			await prisma.agentChannel.deleteMany({ where: { agentId: id } });
+			await prisma.agentDocument.deleteMany({ where: { agentId: id } });
+			await prisma.agent.delete({ where: { id } });
+
+			return c.json({ success: true });
+		},
+		description: "[privada] remove agente",
+	},
+
+	// ===== POST /api/agents/:id/duplicate (duplica) =====
+	{
+		path: "/api/agents/:id/duplicate",
+		method: "post" as const,
+		handler: async (c: Context): Promise<Response> => {
+			const userId = c.req.header("x-user-id");
+			if (!userId)
+				return c.json({ success: false, message: "missing userId" }, 401);
+
+			const id = c.req.param("id");
+			const base = await prisma.agent.findFirst({
+				where: { id, ownerId: userId },
+				include: { canais: true },
+			});
+			if (!base) return c.json({ success: false, message: "not found" }, 404);
+
+			const created = await prisma.agent.create({
+				data: {
+					nome: `${base.nome} (cópia)`,
+					tipo: base.tipo,
+					status: "RASCUNHO",
+					parentId: base.parentId,
+					persona: base.persona,
+					herdaPersonaDoPai: base.herdaPersonaDoPai,
+					ownerId: userId,
+				},
+			});
+
+			if (base.canais.length) {
+				await prisma.agentChannel.createMany({
+					data: base.canais.map((c) => ({
+						agentId: created.id,
+						channel: c.channel,
+					})),
+					skipDuplicates: true,
+				});
+			}
+
+			return c.json({ success: true, data: { id: created.id } }, 201);
+		},
+		description: "[privada] duplica agente",
+	},
+
+	// ===== POST /api/agents/:id/chat =====
+	{
+		path: "/api/agents/:id/chat",
+		method: "post" as const,
+		handler: async (c: Context): Promise<Response> => {
+			const userId = c.req.header("x-user-id");
+			if (!userId)
+				return c.json({ success: false, message: "missing userId" }, 401);
+
+			const id = c.req.param("id");
+			const agent = await prisma.agent.findFirst({
+				where: { id, ownerId: userId },
+			});
+			if (!agent) return c.json({ success: false, message: "not found" }, 404);
+
+			const body = await c.req.json();
+			const parsed = AgentChatPayload.safeParse(body);
+			if (!parsed.success)
+				return c.json({ success: false, message: parsed.error.message }, 400);
+
+			const { buildAgentFromDB } = await import("../agents/factory");
+			const agentInstance = await buildAgentFromDB(id);
+			const result = await agentInstance.generateText(parsed.data.input, {
+				userId,
+				conversationId: parsed.data.conversationId,
+			});
+
+			return c.json({ success: true, data: result }, 201);
+		},
+		description: "[privada] chat com agente usando tools",
 	},
 ];

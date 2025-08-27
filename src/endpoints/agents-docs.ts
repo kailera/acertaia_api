@@ -1,6 +1,7 @@
 import type { CustomEndpointDefinition } from "@voltagent/core";
 // api/agent-docs.endpoints.ts
 import type { Context } from "hono";
+import { z } from "zod";
 import {
 	LinkPayload,
 	assertSameOwner,
@@ -9,7 +10,88 @@ import {
 } from "../utils/documents.helpers";
 import { prisma } from "../utils/prisma";
 
+const AgentDocPayload = z.object({
+	agentId: z.string().min(1),
+	documentId: z.string().min(1),
+	role: z.string().optional(),
+	action: z.enum(["link", "unlink"]).default("link"),
+});
+
 export const agentDocumentEndpoints: CustomEndpointDefinition[] = [
+	// VINCULAR/DESVINCULAR documento ao agente
+	{
+		path: "/api/agent-documents",
+		method: "post" as const,
+		handler: async (c: Context): Promise<Response> => {
+			const userId = c.req.header("x-user-id");
+			if (!userId)
+				return c.json({ success: false, message: "missing userId" }, 401);
+
+			const body = await c.req.json();
+			const parsed = AgentDocPayload.safeParse(body);
+			if (!parsed.success)
+				return c.json({ success: false, message: parsed.error.message }, 400);
+			const p = parsed.data;
+
+			try {
+				await assertSameOwner(userId, p.agentId, p.documentId);
+			} catch (e: unknown) {
+				const msg =
+					e instanceof Error && e.message === "forbidden"
+						? "forbidden"
+						: "not found";
+				return c.json(
+					{ success: false, message: msg },
+					msg === "forbidden" ? 403 : 404,
+				);
+			}
+
+			if (p.action === "link") {
+				let roleEnum = p.role ? roleFromLabel(p.role) : undefined;
+				if (!roleEnum) {
+					const doc = await prisma.document.findUnique({
+						where: { id: p.documentId },
+					});
+					roleEnum =
+						doc?.kind === "SCRIPT"
+							? "EXTRA"
+							: doc?.kind === "CSV"
+								? "CSV"
+								: doc?.kind === "MEDIA"
+									? "MEDIA"
+									: "EXTRA";
+				}
+
+				const created = await prisma.agentDocument.create({
+					data: {
+						agentId: p.agentId,
+						documentId: p.documentId,
+						role: roleEnum,
+					},
+				});
+
+				return c.json({ success: true, data: { linkId: created.id } }, 201);
+			}
+
+			if (p.role) {
+				await prisma.agentDocument.deleteMany({
+					where: {
+						agentId: p.agentId,
+						documentId: p.documentId,
+						role: roleFromLabel(p.role),
+					},
+				});
+			} else {
+				await prisma.agentDocument.deleteMany({
+					where: { agentId: p.agentId, documentId: p.documentId },
+				});
+			}
+
+			return c.json({ success: true });
+		},
+		description: "[privada] vincula ou desvincula documento de agente",
+	},
+
 	// LISTAR documentos vinculados a um agente
 	{
 		path: "/api/agents/:agentId/documents",
