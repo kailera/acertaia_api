@@ -18,7 +18,7 @@ export const createLeadTool = createTool({
 	description: "cria um lead de vendas com as informações básicas de contato",
 	parameters: z.object({
 		name: z.string().describe("nome completo do lead"),
-		email: z.string().email().describe("email de contato"),
+		email: z.string().email().optional().describe("email de contato"),
 		company: z.string().optional().describe("empresa do lead"),
 		campaignId: z
 			.string()
@@ -29,11 +29,22 @@ export const createLeadTool = createTool({
 		const campaignId = args.campaignId ?? "DEFAULT";
 		try {
 			// Aqui poderia ser realizada uma chamada ao banco de dados ou API externa
+			const result = `lead criado: ${args.name}${
+				args.email ? ` <${args.email}>` : ""
+			}${args.company ? ` (${args.company})` : ""}`;
 			const result = `lead criado: ${args.name} <${args.email}>${
 				args.company ? ` (${args.company})` : ""
 			} [${campaignId}]`;
 			return { result };
 		} catch (error) {
+			// trata erro de unicidade do email se vier do banco
+			if (
+				error instanceof Error &&
+				"code" in error &&
+				(error as { code: string }).code === "P2002"
+			) {
+				throw new Error("Email já cadastrado");
+			}
 			const message = error instanceof Error ? error.message : String(error);
 			throw new Error(`Erro na criação do lead: ${message}`);
 		}
