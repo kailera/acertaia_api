@@ -1,49 +1,50 @@
 import { createTool } from "@voltagent/core";
 import { z } from "zod";
 
-export const sdrLeadTool = createTool({
-	name: "qualifyLead",
-	description: "Ferramenta de exemplo para qualificação de leads",
+export const sdrCreateLead = createTool({
+	name: "sdr.create_lead",
+	description: "cria um lead com informações básicas",
 	parameters: z.object({
-		leadName: z.string().describe("nome do lead"),
+		email: z.string().email().describe("email do lead"),
+		name: z.string().optional().describe("nome do lead"),
+		phone: z.string().optional().describe("telefone de contato"),
+		channel: z.string().optional().describe("canal de origem"),
+		campaignId: z.string().optional().describe("campanha associada"),
 	}),
-	execute: async ({ leadName }) => {
-		return { result: `Lead ${leadName} qualificado` };
+	execute: async ({ email, name, phone, channel, campaignId }) => {
+		// TODO: inserir lead no Postgres
+		return { ok: true, leadId: "TODO", stage: "NEW" as const };
 	},
 });
 
-// lead creation tool for SDR agents
-export const createLeadTool = createTool({
-	name: "create_lead",
-	description: "cria um lead de vendas com as informações básicas de contato",
+export const sdrUpdateStage = createTool({
+	name: "sdr.update_stage",
+	description: "atualiza o estágio de um lead",
 	parameters: z.object({
-		name: z.string().describe("nome completo do lead"),
-		email: z.string().email().optional().describe("email de contato"),
-		company: z.string().optional().describe("empresa do lead"),
-		campaignId: z
-			.string()
-			.optional()
-			.describe("identificador da campanha de origem"),
+		leadId: z.string().describe("identificador do lead"),
+		stage: z
+			.enum(["CONTACTED", "QUALIFIED", "SCHEDULED", "WON", "LOST"])
+			.describe("novo estágio"),
+		notes: z.string().optional().describe("observações"),
 	}),
-	execute: async (args) => {
-		const campaignId = args.campaignId ?? "DEFAULT";
-		try {
-			// Aqui poderia ser realizada uma chamada ao banco de dados ou API externa
-			const result = `lead criado: ${args.name} <${args.email}>${
-				args.company ? ` (${args.company})` : ""
-			} [${campaignId}]`;
-			return { result };
-		} catch (error) {
-			// trata erro de unicidade do email se vier do banco
-			if (
-				error instanceof Error &&
-				"code" in error &&
-				(error as { code: string }).code === "P2002"
-			) {
-				throw new Error("Email já cadastrado");
-			}
-			const message = error instanceof Error ? error.message : String(error);
-			throw new Error(`Erro na criação do lead: ${message}`);
-		}
+	execute: async ({ leadId, stage, notes }) => {
+		// TODO: atualizar estágio no Postgres
+		return { ok: true, leadId, stage };
+	},
+});
+
+export const sdrLogInteraction = createTool({
+	name: "sdr.log_interaction",
+	description: "registra uma interação com o lead",
+	parameters: z.object({
+		leadId: z.string().describe("identificador do lead"),
+		type: z
+			.enum(["WHATSAPP", "CALL", "EMAIL", "OTHER"])
+			.describe("tipo de interação"),
+		note: z.string().describe("descrição da interação"),
+	}),
+	execute: async ({ leadId, type, note }) => {
+		// TODO: registrar interação no Postgres
+		return { ok: true };
 	},
 });

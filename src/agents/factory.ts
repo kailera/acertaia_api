@@ -6,19 +6,33 @@ import { makeQdrantRetriever } from "../retriever/qdrant-retriever";
 import type { AgentType } from "@prisma/client";
 import type { Tool } from "@voltagent/core";
 import {
-	financeiroTool,
+	financeiroConfirmPayment,
+	financeiroEmitCharge,
+	financeiroGetPaymentStatus,
 	logisticaTool,
-	registrationStudentsTool,
-	sdrLeadTool,
+	sdrCreateLead,
+	sdrLogInteraction,
+	sdrUpdateStage,
+	secretariaGetEnrollmentStatus,
+	secretariaListRequirements,
+	secretariaUpsertEnrollment,
 } from "../tools";
 
 import { prisma } from "../utils/prisma";
 
 // biome-ignore lint/suspicious/noExplicitAny: generic tool mapping
 const TOOLS_BY_TYPE: Partial<Record<AgentType, Tool<any, any>[]>> = {
-	SECRETARIA: [registrationStudentsTool],
-	FINANCEIRO: [financeiroTool],
-	SDR: [sdrLeadTool],
+	SECRETARIA: [
+		secretariaUpsertEnrollment,
+		secretariaGetEnrollmentStatus,
+		secretariaListRequirements,
+	],
+	FINANCEIRO: [
+		financeiroEmitCharge,
+		financeiroConfirmPayment,
+		financeiroGetPaymentStatus,
+	],
+	SDR: [sdrCreateLead, sdrUpdateStage, sdrLogInteraction],
 	LOGISTICA: [logisticaTool],
 };
 
