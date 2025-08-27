@@ -2,6 +2,7 @@ import { openai } from "@ai-sdk/openai";
 import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { makeQdrantRetriever } from "../retriever/qdrant-retriever";
+
 import { financeiroTool } from "../tools/financeiro";
 import { logisticaTool } from "../tools/logistica";
 import { posVendaTool } from "../tools/pos-venda";
@@ -10,6 +11,7 @@ import { sdrLeadTool } from "../tools/sdr";
 import { registrationStudentsTool } from "../tools/secretary";
 import { suporteTecnicoTool } from "../tools/suporte-tecnico";
 import { vendedorTool } from "../tools/vendedor";
+
 import { prisma } from "../utils/prisma";
 
 function toolsForType(tipo: string) {
@@ -50,7 +52,7 @@ async function buildInstructions(agentId: string) {
     where: { agentId, role: "RULE_OVERRIDE" },
     include: { document: true },
   });
-  const rulesText = ruleLinks.map(l => `\n[REGRA: ${l.document.name}]`).join("");
+  const rulesText = ruleLinks.map((l) => `\n[REGRA: ${l.document.name}]`).join("");
 
   return `${persona}${rulesText}`;
 }

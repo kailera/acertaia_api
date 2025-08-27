@@ -8,3 +8,5 @@ export { vendedorTool } from "./vendedor";
 export { financeiroTool } from "./financeiro";
 export { logisticaTool } from "./logistica";
 export { rhTool } from "./rh";
+export * from "./secretary";
+export * from "./sdr";

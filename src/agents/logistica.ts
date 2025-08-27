@@ -1,32 +1,29 @@
 import { openai } from "@ai-sdk/openai";
-import { Agent, InMemoryStorage } from "@voltagent/core";
+import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { scriptGeral } from "../scripts/geral";
-import { SRDScript } from "../scripts/sdr-script";
+import { LogisticaScript } from "../scripts/logistica-script";
 
-export const SDRAgent = new Agent({
-	name: "SOFIA",
-	instructions: `${SRDScript} ${scriptGeral}`,
+export const LogisticaAgent = new Agent({
+	name: "Leo",
+	instructions: `${LogisticaScript} ${scriptGeral}`,
 	llm: new VercelAIProvider(),
 	model: openai("gpt-4o-mini"),
 	tools: [],
 	subAgents: [],
-	purpose: "Agente de SRD",
+	purpose: "Agente de logística para acompanhar entregas e estoque",
 	userContext: new Map([["environment", "production"]]),
 });
 
-// aquui é dado a resposta // retorne a resposta inteira e quebre em chunks
-export async function SDRChat(
+export async function LogisticaChat(
 	input: string,
 	userId: string,
 	conversationId: string,
 ) {
 	console.log(`User: ${input}`);
-	// Use streamText for interactive responses
-	const result = await SDRAgent.generateText(input, {
+	const result = await LogisticaAgent.generateText(input, {
 		userId,
 		conversationId,
 	});
-
 	return result;
 }

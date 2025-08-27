@@ -12,4 +12,4 @@ FUNCIONALIDADES E RESPONSABILIDADES
 2.3 Contrato: emissão, assinatura eletrônica, arquivo.
 2.4 Registro acadêmico: turma/turno, vínculos de responsáveis.
 2.5 Credenciais: carteirinha, acesso a app/portal, declarações (matrícula/frequência).
-`
+`;
