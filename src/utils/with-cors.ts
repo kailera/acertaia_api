@@ -1,23 +1,25 @@
-export default   function withCORS(handler: any) {
-  return async (c: any) => {
-    c.res.headers.set(
-      "Access-Control-Allow-Origin",
-      "acertaia-frontend.vercel.app"
-    );
-    c.res.headers.set("Access-Control-Allow-Credentials", "true");
-    c.res.headers.set(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization"
-    );
-    c.res.headers.set(
-      "Access-Control-Allow-Methods",
-      "GET, POST, PUT, DELETE, OPTIONS"
-    );
+import type { Context } from "hono";
 
-    if (c.req.method === "OPTIONS") {
-      return c.json({}, 204);
-    }
+export default function withCORS(handler: (c: Context) => Promise<Response>) {
+	return async (c: Context): Promise<Response> => {
+		c.res.headers.set(
+			"Access-Control-Allow-Origin",
+			"acertaia-frontend.vercel.app",
+		);
+		c.res.headers.set("Access-Control-Allow-Credentials", "true");
+		c.res.headers.set(
+			"Access-Control-Allow-Headers",
+			"Content-Type, Authorization",
+		);
+		c.res.headers.set(
+			"Access-Control-Allow-Methods",
+			"GET, POST, PUT, DELETE, OPTIONS",
+		);
 
-    return handler(c);
-  };
+		if (c.req.method === "OPTIONS") {
+			return c.json({}, 204);
+		}
+
+		return handler(c);
+	};
 }

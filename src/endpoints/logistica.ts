@@ -1,14 +1,12 @@
 import type { CustomEndpointDefinition } from "@voltagent/core";
+import type { Context } from "hono";
 import { LogisticaChat } from "../agents/logistica";
 
 export const logisticaEndpoints: CustomEndpointDefinition[] = [
 	{
 		path: "/api/logistica/chat",
 		method: "post" as const,
-		handler: async (
-			// biome-ignore lint/suspicious/noExplicitAny: framework context is untyped
-			c: any,
-		) => {
+		handler: async (c: Context): Promise<Response> => {
 			const body = await c.req.json();
 			const { input, userId, conversationId } = body;
 
@@ -22,14 +20,12 @@ export const logisticaEndpoints: CustomEndpointDefinition[] = [
 					},
 					201,
 				);
-			} catch (
-				// biome-ignore lint/suspicious/noExplicitAny: unknown error shape
-				error: any
-			) {
+			} catch (error: unknown) {
 				return c.json(
 					{
 						success: false,
-						message: error.message || "Invalid request body",
+						message:
+							error instanceof Error ? error.message : "Invalid request body",
 						data: null,
 					},
 					400,
