@@ -1,32 +1,29 @@
 import { openai } from "@ai-sdk/openai";
-import { Agent, InMemoryStorage } from "@voltagent/core";
+import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
+import { FinanceiroScript } from "../scripts/financeiro-script";
 import { scriptGeral } from "../scripts/geral";
-import { SRDScript } from "../scripts/sdr-script";
 
-export const SDRAgent = new Agent({
-	name: "SOFIA",
-	instructions: `${SRDScript} ${scriptGeral}`,
+export const FinanceiroAgent = new Agent({
+	name: "Fiona",
+	instructions: `${FinanceiroScript} ${scriptGeral}`,
 	llm: new VercelAIProvider(),
 	model: openai("gpt-4o-mini"),
 	tools: [],
 	subAgents: [],
-	purpose: "Agente de SRD",
+	purpose: "Agente financeiro que gerencia pagamentos e recebimentos",
 	userContext: new Map([["environment", "production"]]),
 });
 
-// aquui é dado a resposta // retorne a resposta inteira e quebre em chunks
-export async function SDRChat(
+export async function FinanceiroChat(
 	input: string,
 	userId: string,
 	conversationId: string,
 ) {
 	console.log(`User: ${input}`);
-	// Use streamText for interactive responses
-	const result = await SDRAgent.generateText(input, {
+	const result = await FinanceiroAgent.generateText(input, {
 		userId,
 		conversationId,
 	});
-
 	return result;
 }
