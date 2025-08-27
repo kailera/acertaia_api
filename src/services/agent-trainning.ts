@@ -24,7 +24,7 @@ function chunkText(s: string, size = 1800, overlap = 400) {
 }
 
 export async function startAgentTraining(jobId: string) {
-	await ensureCollection();
+	await ensureCollection(1536);
 
 	// marca RUNNING
 	const job = await prisma.trainingJob.update({
@@ -50,7 +50,7 @@ export async function startAgentTraining(jobId: string) {
 	}> = [];
 
 	for (const d of docs) {
-		const { text, kind, meta } = await loadDocumentText({
+		const { text, kind } = await loadDocumentText({
 			id: d.id,
 			name: d.name,
 			kind: d.kind,
@@ -60,7 +60,7 @@ export async function startAgentTraining(jobId: string) {
 		});
 		if (!text?.trim()) continue;
 
-		const chunks = chunkText(text);
+		const chunks = chunkText(text, 1800, 400);
 
 		// embeddings em lotes
 		const B = 64;
@@ -72,15 +72,16 @@ export async function startAgentTraining(jobId: string) {
 			});
 
 			for (let j = 0; j < slice.length; j++) {
+				const chunk = i + j;
 				points.push({
-					id: `${d.id}-${i + j}`,
+					id: `${agent.id}:${d.id}:${chunk}`,
 					vector: emb.data[j].embedding,
 					payload: {
-						...meta,
-						text: slice[j],
 						agentId: agent.id,
 						documentId: d.id,
 						kind,
+						text: slice[j],
+						docName: d.name,
 					},
 				});
 			}
