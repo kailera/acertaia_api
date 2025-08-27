@@ -804,7 +804,7 @@ model Lead {
   capturedAt     DateTime  @default(now())
   status         LeadStatus @default(NEW)
 
-  campaignId     String
+  campaignId     String   @default("DEFAULT")
   campaign       Campaign   @relation(fields: [campaignId], references: [id])
 
   interactions   Interaction[]
