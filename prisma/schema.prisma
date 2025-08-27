@@ -793,7 +793,7 @@ model Lead {
   id             String    @id @default(cuid())
   firstName      String?
   lastName       String?
-  email          String
+  email          String? @unique
   phone          String?
   consent        Boolean   @default(false)
   persona        Persona?
