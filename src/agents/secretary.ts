@@ -3,14 +3,22 @@ import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { scriptGeral } from "../scripts/geral";
 import { SecretaryScript } from "../scripts/secretary-script";
-import { registrationStudentsTool } from "../tools";
+import {
+	secretariaGetEnrollmentStatus,
+	secretariaListRequirements,
+	secretariaUpsertEnrollment,
+} from "../tools";
 
 export const SecretaryAgent = new Agent({
 	name: "Anne",
 	instructions: `${SecretaryScript} ${scriptGeral}`,
 	llm: new VercelAIProvider(),
 	model: openai("gpt-4o-mini"),
-	tools: [registrationStudentsTool],
+	tools: [
+		secretariaUpsertEnrollment,
+		secretariaGetEnrollmentStatus,
+		secretariaListRequirements,
+	],
 	subAgents: [],
 	purpose: "Agente de secretária que faz a gestão de documentos e matrículas",
 	userContext: new Map([["environment", "production"]]),
