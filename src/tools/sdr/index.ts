@@ -20,13 +20,18 @@ export const createLeadTool = createTool({
 		name: z.string().describe("nome completo do lead"),
 		email: z.string().email().describe("email de contato"),
 		company: z.string().optional().describe("empresa do lead"),
+		campaignId: z
+			.string()
+			.optional()
+			.describe("identificador da campanha de origem"),
 	}),
 	execute: async (args) => {
+		const campaignId = args.campaignId ?? "DEFAULT";
 		try {
 			// Aqui poderia ser realizada uma chamada ao banco de dados ou API externa
 			const result = `lead criado: ${args.name} <${args.email}>${
 				args.company ? ` (${args.company})` : ""
-			}`;
+			} [${campaignId}]`;
 			return { result };
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
