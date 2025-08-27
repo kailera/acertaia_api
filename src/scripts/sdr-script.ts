@@ -28,5 +28,4 @@ PERSONALIDADE E TOM:objetiva ,persuasiva , eficiente, simpática
 
 KPIs: CTR, CVR, CPL, % de leads qualificados, taxa de conversão . valor cac
 
-SCRIPT PADRAO SRD`
-
+SCRIPT PADRAO SRD`;

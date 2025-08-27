@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import {
@@ -113,7 +114,7 @@ export const uploadDirectEndpoints: CustomEndpointDefinition[] = [
 							savedAs: finalName,
 							size,
 							sha256: hash,
-						} as unknown,
+						} as Prisma.InputJsonValue,
 					},
 				});
 
