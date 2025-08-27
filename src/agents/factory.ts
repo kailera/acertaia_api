@@ -1,14 +1,37 @@
-import { Agent } from "@voltagent/core";
 import { openai } from "@ai-sdk/openai";
+import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
-import { prisma } from "../utils/prisma";
 import { makeQdrantRetriever } from "../retriever/qdrant-retriever";
-import { registrationStudentsTool } from "../tools/secretary"; // exemplo
+import { financeiroTool } from "../tools/financeiro";
+import { logisticaTool } from "../tools/logistica";
+import { posVendaTool } from "../tools/pos-venda";
+import { rhTool } from "../tools/rh";
+import { sdrLeadTool } from "../tools/sdr";
+import { registrationStudentsTool } from "../tools/secretary";
+import { suporteTecnicoTool } from "../tools/suporte-tecnico";
+import { vendedorTool } from "../tools/vendedor";
+import { prisma } from "../utils/prisma";
 
 function toolsForType(tipo: string) {
   switch (tipo) {
-    case "SECRETARIA": return [registrationStudentsTool];
-    default: return [];
+    case "SECRETARIA":
+      return [registrationStudentsTool];
+    case "SDR":
+      return [sdrLeadTool];
+    case "POS_VENDA":
+      return [posVendaTool];
+    case "SUPORTE_TECNICO":
+      return [suporteTecnicoTool];
+    case "VENDEDOR":
+      return [vendedorTool];
+    case "FINANCEIRO":
+      return [financeiroTool];
+    case "LOGISTICA":
+      return [logisticaTool];
+    case "RH":
+      return [rhTool];
+    default:
+      return [];
   }
 }
 
@@ -46,7 +69,7 @@ export async function buildAgentFromDB(agentId: string) {
     llm: new VercelAIProvider(),
     model: openai("gpt-4o-mini"),
     tools,
-    retriever: makeQdrantRetriever(row.id),   // 🔑 RAG por agente
+    retriever: makeQdrantRetriever(row.id), // 🔑 RAG por agente
     subAgents: [],
     userContext: new Map([["environment", "production"], ["agentId", row.id]]),
   });
