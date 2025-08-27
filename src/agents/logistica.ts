@@ -1,8 +1,8 @@
-import { openai } from "@ai-sdk/openai";
 import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { scriptGeral } from "../scripts/geral";
 import { LogisticaScript } from "../scripts/logistica-script";
+import { openai } from "../utils/openai";
 
 export const LogisticaAgent = new Agent({
 	name: "Leo",

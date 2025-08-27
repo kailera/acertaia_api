@@ -1,8 +1,8 @@
-import { openai } from "@ai-sdk/openai";
 import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { FinanceiroScript } from "../scripts/financeiro-script";
 import { scriptGeral } from "../scripts/geral";
+import { openai } from "../utils/openai";
 
 export const FinanceiroAgent = new Agent({
 	name: "Fiona",
