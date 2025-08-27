@@ -1,0 +1,47 @@
+import { CustomEndpointDefinition } from "@voltagent/core";
+import { prisma } from "../utils/prisma";
+import { startAgentTraining } from "../services/agent-trainning";
+
+export const agentTrainEndpoints: CustomEndpointDefinition[] = [
+  {
+    path: "/api/agents/:id/train",
+    method: "post" as const,
+    handler: async (c: any) => {
+      const userId = c.req.header("x-user-id");
+      if (!userId)
+        return c.json({ success: false, message: "missing userId" }, 401);
+      const id = c.req.param("id");
+
+      const agent = await prisma.agent.findUnique({ where: { id } });
+      if (!agent)
+        return c.json({ success: false, message: "agent not found" }, 404);
+      if (agent.ownerId !== userId)
+        return c.json({ success: false, message: "forbidden" }, 403);
+
+      const job = await prisma.trainingJob.create({
+        data: { agentId: id, status: "PENDING" },
+      });
+
+      startAgentTraining(job.id).catch(async (err) => {
+        await prisma.trainingJob.update({
+          where: { id: job.id },
+          data: { status: "FAILED", error: String(err).slice(0, 2000) },
+        });
+      });
+
+      return c.json({ success: true, jobId: job.id });
+    },
+  },
+  {
+    path: "/api/agents/:id/train/status",
+    method: "get" as const,
+    handler: async (c: any) => {
+      const id = c.req.param("id");
+      const job = await prisma.trainingJob.findFirst({
+        where: { agentId: id },
+        orderBy: { createdAt: "desc" },
+      });
+      return c.json({ success: true, job });
+    },
+  },
+];
