@@ -2,17 +2,21 @@ import { openai } from "@ai-sdk/openai";
 import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { makeQdrantRetriever } from "../retriever/qdrant-retriever";
-import { registrationStudentsTool } from "../tools"; // exemplo
+import { createLeadTool } from "../tools/sdr";
+import { registrationStudentsTool } from "../tools"; // se NÃO houver reexport, troque para "../tools/secretary"
 import { prisma } from "../utils/prisma";
 
 function toolsForType(tipo: string) {
-	switch (tipo) {
-		case "SECRETARIA":
-			return [registrationStudentsTool];
-		default:
-			return [];
-	}
+  switch (tipo) {
+    case "SECRETARIA":
+      return [registrationStudentsTool];
+    case "SDR":
+      return [createLeadTool];
+    default:
+      return [];
+  }
 }
+
 
 async function buildInstructions(agentId: string) {
 	const agent = await prisma.agent.findUnique({ where: { id: agentId } });
