@@ -2,7 +2,7 @@ import { createTool } from "@voltagent/core";
 import { z } from "zod";
 
 export const sdrCreateLead = createTool({
-	name: "sdr.create_lead",
+	name: "sdr_create_lead",
 	description: "cria um lead com informações básicas",
 	parameters: z.object({
 		email: z.string().email().describe("email do lead"),
@@ -18,7 +18,7 @@ export const sdrCreateLead = createTool({
 });
 
 export const sdrUpdateStage = createTool({
-	name: "sdr.update_stage",
+	name: "sdr_update_stage",
 	description: "atualiza o estágio de um lead",
 	parameters: z.object({
 		leadId: z.string().describe("identificador do lead"),
@@ -34,7 +34,7 @@ export const sdrUpdateStage = createTool({
 });
 
 export const sdrLogInteraction = createTool({
-	name: "sdr.log_interaction",
+	name: "sdr_log_interaction",
 	description: "registra uma interação com o lead",
 	parameters: z.object({
 		leadId: z.string().describe("identificador do lead"),
