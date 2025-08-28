@@ -1,6 +1,7 @@
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { SDRChat } from "../agents/sdr";
+import { randomUUID } from "node:crypto";
 
 export const srdEndpoints: CustomEndpointDefinition[] = [
 	{
@@ -9,15 +10,16 @@ export const srdEndpoints: CustomEndpointDefinition[] = [
 		handler: async (c: Context): Promise<Response> => {
 			const body = await c.req.json();
 			const { input, userId, conversationId } = body;
+			const convId = conversationId && conversationId.length > 0 ? conversationId : randomUUID();
 
 			// pegue os dados do a
 			try {
-				const response = await SDRChat(input, userId, conversationId);
+				const response = await SDRChat(input, userId, convId);
 				return c.json(
 					{
 						success: true,
-						message: "Login successful",
-						data: response,
+						message: "message successfull",
+						data: { ...response, conversationId: convId },
 					},
 					201,
 				);

@@ -8,6 +8,7 @@ import {
 	secretariaUpsertEnrollment,
 } from "../tools";
 import { openai } from "../utils/openai";
+import { memoryStorage } from "../utils/memory";
 
 export const SecretaryAgent = new Agent({
 	name: "Anne",
@@ -22,6 +23,7 @@ export const SecretaryAgent = new Agent({
 	subAgents: [],
 	purpose: "Agente de secretária que faz a gestão de documentos e matrículas",
 	userContext: new Map([["environment", "production"]]),
+	memory: memoryStorage,
 });
 
 // aquui é dado a resposta // retorne a resposta inteira e quebre em chunks
