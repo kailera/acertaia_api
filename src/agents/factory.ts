@@ -19,6 +19,7 @@ import {
 } from "../tools";
 
 import { prisma } from "../utils/prisma";
+import { memoryStorage } from "../utils/memory";
 
 // biome-ignore lint/suspicious/noExplicitAny: generic tool mapping
 const TOOLS_BY_TYPE: Partial<Record<AgentType, Tool<any, any>[]>> = {
@@ -86,5 +87,6 @@ export async function buildAgentFromDB(agentId: string) {
 			["environment", "production"],
 			["agentId", row.id],
 		]),
+		memory: memoryStorage,
 	});
 }

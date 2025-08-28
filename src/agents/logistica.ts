@@ -3,6 +3,7 @@ import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { scriptGeral } from "../scripts/geral";
 import { LogisticaScript } from "../scripts/logistica-script";
 import { openai } from "../utils/openai";
+import { memoryStorage } from "../utils/memory";
 
 export const LogisticaAgent = new Agent({
 	name: "Leo",
@@ -13,6 +14,7 @@ export const LogisticaAgent = new Agent({
 	subAgents: [],
 	purpose: "Agente de logística para acompanhar entregas e estoque",
 	userContext: new Map([["environment", "production"]]),
+	memory: memoryStorage,
 });
 
 export async function LogisticaChat(

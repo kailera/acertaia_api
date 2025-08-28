@@ -3,6 +3,7 @@ import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { FinanceiroScript } from "../scripts/financeiro-script";
 import { scriptGeral } from "../scripts/geral";
 import { openai } from "../utils/openai";
+import { memoryStorage } from "../utils/memory";
 
 export const FinanceiroAgent = new Agent({
 	name: "Fiona",
@@ -13,6 +14,7 @@ export const FinanceiroAgent = new Agent({
 	subAgents: [],
 	purpose: "Agente financeiro que gerencia pagamentos e recebimentos",
 	userContext: new Map([["environment", "production"]]),
+	memory: memoryStorage,
 });
 
 export async function FinanceiroChat(

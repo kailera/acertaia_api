@@ -3,6 +3,7 @@ import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { scriptGeral } from "../scripts/geral";
 import { SRDScript } from "../scripts/sdr-script";
 import { openai } from "../utils/openai";
+import { memoryStorage } from "../utils/memory";
 
 export const SDRAgent = new Agent({
 	name: "SOFIA",
@@ -13,6 +14,7 @@ export const SDRAgent = new Agent({
 	subAgents: [],
 	purpose: "Agente de SRD",
 	userContext: new Map([["environment", "production"]]),
+	memory: memoryStorage,
 });
 
 // aquui é dado a resposta // retorne a resposta inteira e quebre em chunks

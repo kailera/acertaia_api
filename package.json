@@ -12,7 +12,8 @@
     "lint:fix": "biome check --write ./src",
     "typecheck": "tsc --noEmit",
     "volt": "volt",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "db:reset": "node ./scripts/db-reset.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -27,6 +28,7 @@
     "@voltagent/cli": "^0.1.9",
     "@voltagent/core": "^0.1.63",
     "@voltagent/logger": "^0.1.0",
+    "@voltagent/postgres": "^0.1.12",
     "@voltagent/supabase": "^0.1.20",
     "@voltagent/vercel-ai": "^1.0.0",
     "bcryptjs": "^3.0.2",
@@ -43,9 +45,6 @@
     "prisma": "^6.14.0",
     "tsx": "^4.20.5",
     "typescript": "^5.7.3"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   },
   "engines": {
     "node": ">=20.0.0"

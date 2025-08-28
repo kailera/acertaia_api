@@ -3,6 +3,7 @@ import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { z } from "zod";
 import { prisma } from "../utils/prisma";
+import { randomUUID } from "node:crypto";
 
 // ---- mapeadores (front -> enums do Prisma)
 const mapTipo = (t: string): AgentType => {
@@ -363,12 +364,19 @@ export const agentEndpoints: CustomEndpointDefinition[] = [
 
 			const { buildAgentFromDB } = await import("../agents/factory");
 			const agentInstance = await buildAgentFromDB(id);
+			const convId =
+				parsed.data.conversationId && parsed.data.conversationId.length > 0
+					? parsed.data.conversationId
+					: randomUUID();
 			const result = await agentInstance.generateText(parsed.data.input, {
 				userId,
-				conversationId: parsed.data.conversationId,
+				conversationId: convId,
 			});
 
-			return c.json({ success: true, data: result }, 201);
+			return c.json(
+				{ success: true, data: { ...result, conversationId: convId } },
+				201,
+			);
 		},
 		description: "[privada] chat com agente usando tools",
 	},
