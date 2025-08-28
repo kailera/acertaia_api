@@ -2,7 +2,7 @@ import { createTool } from "@voltagent/core";
 import { z } from "zod";
 
 export const secretariaUpsertEnrollment = createTool({
-	name: "secretaria.upsert_enrollment",
+	name: "secretaria_upsert_enrollment",
 	description: "cria ou atualiza uma matrícula de aluno",
 	parameters: z.object({
 		student: z.object({
@@ -30,7 +30,7 @@ export const secretariaUpsertEnrollment = createTool({
 });
 
 export const secretariaGetEnrollmentStatus = createTool({
-	name: "secretaria.get_enrollment_status",
+	name: "secretaria_get_enrollment_status",
 	description: "obtém o status da matrícula de um aluno por CPF ou email",
 	parameters: z.object({
 		cpfOrEmail: z.string().describe("CPF ou email do aluno"),
@@ -43,7 +43,7 @@ export const secretariaGetEnrollmentStatus = createTool({
 });
 
 export const secretariaListRequirements = createTool({
-	name: "secretaria.list_requirements",
+	name: "secretaria_list_requirements",
 	description: "lista os requisitos para um curso",
 	parameters: z.object({
 		course: z.string().describe("curso para consulta"),

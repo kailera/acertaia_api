@@ -15,7 +15,7 @@ const chargeParams = z
 	});
 
 export const financeiroEmitCharge = createTool({
-	name: "financeiro.emit_charge",
+	name: "financeiro_emit_charge",
 	description: "emite uma cobrança para um plano ou estudante",
 	parameters: chargeParams,
 	execute: async ({
@@ -46,7 +46,7 @@ const referenceParams = z
 	});
 
 export const financeiroConfirmPayment = createTool({
-	name: "financeiro.confirm_payment",
+	name: "financeiro_confirm_payment",
 	description: "confirma o pagamento de uma cobrança",
 	parameters: referenceParams,
 	execute: async ({ paymentId, reference }) => {
@@ -56,7 +56,7 @@ export const financeiroConfirmPayment = createTool({
 });
 
 export const financeiroGetPaymentStatus = createTool({
-	name: "financeiro.get_payment_status",
+	name: "financeiro_get_payment_status",
 	description: "obtém o status de um pagamento",
 	parameters: referenceParams,
 	execute: async ({ paymentId, reference }) => {
