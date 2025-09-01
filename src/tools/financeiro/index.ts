@@ -221,3 +221,122 @@ export const financeiroCalcularMensalidades = createTool({
 		};
 	},
 });
+
+// -----------------------------------------------------------------------------
+// Ferramentas adicionais do financeiro
+
+export const financeiroListAdditionalFees = createTool({
+	name: "financeiro_list_taxas_adicionais",
+	description: "lista taxas adicionais como matrícula e material didático",
+	parameters: z.object({}),
+	execute: async () => {
+		return {
+			ok: true as const,
+			fees: [
+				{ tipo: "matrícula", valor: 100 },
+				{ tipo: "rematrícula", valor: 80 },
+				{ tipo: "atividades_extracurriculares", valor: 50 },
+				{ tipo: "excursões", valor: 200 },
+				{ tipo: "material_didático", valor: 150 },
+			],
+		};
+	},
+});
+
+export const financeiroListBoletos = createTool({
+	name: "financeiro_list_boletos",
+	description: "lista boletos emitidos com status",
+	parameters: z.object({}),
+	execute: async () => {
+		return {
+			boletos: [
+				{
+					linhaDigitavel:
+						"00000.00000 00000.000000 00000.000000 0 00000000000000",
+					dueDate: new Date().toISOString(),
+					status: "ABERTO" as const,
+				},
+				{
+					linhaDigitavel:
+						"11111.11111 11111.111111 11111.111111 1 11111111111111",
+					dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+					status: "PAGO" as const,
+				},
+				{
+					linhaDigitavel:
+						"22222.22222 22222.222222 22222.222222 2 22222222222222",
+					dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+					status: "ATRASADO" as const,
+				},
+			],
+		};
+	},
+});
+
+export const financeiroGetPaymentHistory = createTool({
+	name: "financeiro_get_payment_history",
+	description: "obtém histórico de pagamentos",
+	parameters: z.object({ planId: z.string().optional() }),
+	execute: async ({ planId }) => {
+		const where = planId ? { planId } : {};
+		const payments = await prisma.payment.findMany({
+			where,
+			orderBy: { dueDate: "desc" },
+		});
+		return {
+			historico: payments.map((p) => ({
+				data: (p.paidAt ?? p.dueDate).toISOString(),
+				valor: p.amount,
+				metodo: p.method,
+			})),
+		};
+	},
+});
+
+export const financeiroGetScholarshipInfo = createTool({
+	name: "financeiro_get_scholarship_info",
+	description: "informa critérios e descontos de bolsas de estudo",
+	parameters: z.object({}),
+	execute: async () => {
+		return {
+			criterios: ["renda familiar", "mérito acadêmico"],
+			concursos: ["Concurso Interno", "Olimpíadas"],
+			descontos: [0.5, 0.3],
+		};
+	},
+});
+
+export const financeiroListConvenios = createTool({
+	name: "financeiro_list_convenios",
+	description: "lista convênios com empresas parceiras",
+	parameters: z.object({}),
+	execute: async () => {
+		return {
+			convenios: [
+				{ empresa: "Empresa A", desconto: 0.1 },
+				{ empresa: "Empresa B", desconto: 0.15 },
+			],
+		};
+	},
+});
+
+const negotiationParams = z.object({
+	planId: z.string().describe("plano relacionado"),
+	detalhes: z.string().describe("detalhes do acordo"),
+	parcelas: z.number().optional().describe("quantidade de parcelas"),
+});
+
+export const financeiroRegisterNegotiation = createTool({
+	name: "financeiro_registrar_negociacao",
+	description: "registra negociações ou parcelamentos de um plano",
+	parameters: negotiationParams,
+	execute: async ({ planId, detalhes, parcelas }) => {
+		await prisma.plans.update({
+			where: { id: planId },
+			data: {
+				negotiation: `${detalhes}${parcelas ? ` | parcelas: ${parcelas}` : ""}`,
+			},
+		});
+		return { ok: true as const };
+	},
+});

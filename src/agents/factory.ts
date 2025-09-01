@@ -8,7 +8,13 @@ import type { Tool } from "@voltagent/core";
 import {
 	financeiroConfirmPayment,
 	financeiroEmitCharge,
+	financeiroGetPaymentHistory,
 	financeiroGetPaymentStatus,
+	financeiroGetScholarshipInfo,
+	financeiroListAdditionalFees,
+	financeiroListBoletos,
+	financeiroListConvenios,
+	financeiroRegisterNegotiation,
 	logisticaTool,
 	sdrCreateLead,
 	sdrLogInteraction,
@@ -18,8 +24,8 @@ import {
 	secretariaUpsertEnrollment,
 } from "../tools";
 
-import { prisma } from "../utils/prisma";
 import { memoryStorage } from "../utils/memory";
+import { prisma } from "../utils/prisma";
 
 // biome-ignore lint/suspicious/noExplicitAny: generic tool mapping
 const TOOLS_BY_TYPE: Partial<Record<AgentType, Tool<any, any>[]>> = {
@@ -32,6 +38,12 @@ const TOOLS_BY_TYPE: Partial<Record<AgentType, Tool<any, any>[]>> = {
 		financeiroEmitCharge,
 		financeiroConfirmPayment,
 		financeiroGetPaymentStatus,
+		financeiroListAdditionalFees,
+		financeiroListBoletos,
+		financeiroGetPaymentHistory,
+		financeiroGetScholarshipInfo,
+		financeiroListConvenios,
+		financeiroRegisterNegotiation,
 	],
 	SDR: [sdrCreateLead, sdrUpdateStage, sdrLogInteraction],
 	LOGISTICA: [logisticaTool],
