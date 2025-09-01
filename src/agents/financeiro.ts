@@ -2,7 +2,15 @@ import { Agent } from "@voltagent/core";
 import { VercelAIProvider } from "@voltagent/vercel-ai";
 import { FinanceiroScript } from "../scripts/financeiro-script";
 import { scriptGeral } from "../scripts/geral";
-import { financeiroCalcularMensalidades } from "../tools";
+import {
+	financeiroCalcularMensalidades,
+	financeiroGetPaymentHistory,
+	financeiroGetScholarshipInfo,
+	financeiroListAdditionalFees,
+	financeiroListBoletos,
+	financeiroListConvenios,
+	financeiroRegisterNegotiation,
+} from "../tools";
 import { memoryStorage } from "../utils/memory";
 import { openai } from "../utils/openai";
 
@@ -11,7 +19,15 @@ export const FinanceiroAgent = new Agent({
 	instructions: `${FinanceiroScript} ${scriptGeral}`,
 	llm: new VercelAIProvider(),
 	model: openai("gpt-4o-mini"),
-	tools: [financeiroCalcularMensalidades],
+	tools: [
+		financeiroCalcularMensalidades,
+		financeiroListAdditionalFees,
+		financeiroListBoletos,
+		financeiroGetPaymentHistory,
+		financeiroGetScholarshipInfo,
+		financeiroListConvenios,
+		financeiroRegisterNegotiation,
+	],
 	subAgents: [],
 	purpose: "Agente financeiro que gerencia pagamentos e recebimentos",
 	userContext: new Map([["environment", "production"]]),
