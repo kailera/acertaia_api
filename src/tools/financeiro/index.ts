@@ -1,5 +1,6 @@
 import { createTool } from "@voltagent/core";
 import { z } from "zod";
+import { prisma } from "../../utils/prisma";
 
 const chargeParams = z
 	.object({
@@ -26,11 +27,44 @@ export const financeiroEmitCharge = createTool({
 		dueDate,
 		description,
 	}) => {
-		// TODO: inserir cobrança no Postgres
+		// Inserir cobrança no Postgres (tabela payments), vinculada a um plano
+		const resolvedDue = dueDate ? new Date(dueDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+		let resolvedPlanId: string | null = planId ?? null;
+
+		if (!resolvedPlanId && studentRef) {
+			// Tentar resolver pelo sponsor diretamente
+			const bySponsor = await prisma.plans.findFirst({ where: { sponsorId: studentRef } });
+			if (bySponsor) {
+				resolvedPlanId = bySponsor.id;
+			} else {
+				// Tentar resolver via relação Responsible usando studentId
+				const rel = await prisma.responsible.findFirst({ where: { studentId: studentRef } });
+				if (rel) {
+					const byRel = await prisma.plans.findFirst({ where: { sponsorId: rel.sponsorId } });
+					if (byRel) resolvedPlanId = byRel.id;
+				}
+			}
+		}
+
+		if (!resolvedPlanId) {
+			return { ok: false as const, error: "Plano não encontrado para a referência informada" };
+		}
+
+		const created = await prisma.payment.create({
+			data: {
+				amount,
+				status: "PENDING",
+				method, // "PIX" | "BOLETO"
+				dueDate: resolvedDue,
+				notes: description ?? null,
+				planId: resolvedPlanId,
+			},
+		});
+
 		return {
-			ok: true,
-			paymentId: "TODO",
-			reference: "TODO",
+			ok: true as const,
+			paymentId: created.id,
+			reference: created.id,
 			status: "aguardando" as const,
 		};
 	},

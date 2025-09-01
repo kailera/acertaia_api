@@ -1,8 +1,49 @@
 import { PrismaClient, AgentType, Channel, Role } from "@prisma/client";
+import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
+        // Seed: demo user with password
+        const demoEmail = "demo@acertaia.local";
+        const demoPassword = "demo123"; // change in production
+        const demoHash = await hash(demoPassword, 10);
+
+        const demoUser = await prisma.user.upsert({
+                where: { email: demoEmail },
+                update: { passwordHash: demoHash, role: Role.ADMIN, name: "Demo User" },
+                create: {
+                        name: "Demo User",
+                        email: demoEmail,
+                        passwordHash: demoHash,
+                        role: Role.ADMIN,
+                },
+        });
+
+        // Additional users for the User table
+        const users = [
+                { name: "Admin", email: "admin@acertaia.local", role: Role.ADMIN },
+                { name: "Supervisor", email: "supervisor@acertaia.local", role: Role.SUPERVISOR },
+                { name: "Secretaria", email: "secretaria@acertaia.local", role: Role.SECRETARIA },
+                { name: "Financeiro", email: "financeiro@acertaia.local", role: Role.FINANCEIRO },
+                { name: "SDR", email: "sdr@acertaia.local", role: Role.SDR },
+                { name: "Logistica", email: "logistica@acertaia.local", role: Role.LOGISTICA },
+                { name: "User", email: "user@acertaia.local", role: Role.USER },
+        ] as const;
+
+        for (const u of users) {
+                await prisma.user.upsert({
+                        where: { email: u.email },
+                        update: { name: u.name, role: u.role, passwordHash: demoHash },
+                        create: {
+                                name: u.name,
+                                email: u.email,
+                                role: u.role,
+                                passwordHash: demoHash,
+                        },
+                });
+        }
+
         await prisma.campaign.upsert({
                 where: { id: "DEFAULT" },
                 update: {},
@@ -27,11 +68,11 @@ async function main() {
 
         const owner = await prisma.user.upsert({
                 where: { email: "template@system.local" },
-                update: {},
+                update: { passwordHash: demoHash },
                 create: {
                         name: "Template Owner",
                         email: "template@system.local",
-                        passwordHash: "",
+                        passwordHash: demoHash,
                         role: Role.ADMIN,
                 },
         });
@@ -88,6 +129,12 @@ async function main() {
                         isTemplate: true,
                 },
         });
+
+        console.log("Seed completed. Demo credentials (all seeded users share password):");
+        console.log(`  default password: ${demoPassword}`);
+        console.log("  users:");
+        console.log(`   - ${demoEmail}`);
+        for (const u of users) console.log(`   - ${u.email}`);
 }
 
 main()
