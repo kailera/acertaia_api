@@ -7,8 +7,9 @@ import {
 	secretariaListRequirements,
 	secretariaUpsertEnrollment,
 } from "../tools";
-import { openai } from "../utils/openai";
 import { memoryStorage } from "../utils/memory";
+import { openai } from "../utils/openai";
+import { FinanceiroAgent } from "./financeiro";
 
 export const SecretaryAgent = new Agent({
 	name: "Anne",
@@ -20,7 +21,7 @@ export const SecretaryAgent = new Agent({
 		secretariaGetEnrollmentStatus,
 		secretariaListRequirements,
 	],
-	subAgents: [],
+	subAgents: [FinanceiroAgent],
 	purpose: "Agente de secretária que faz a gestão de documentos e matrículas",
 	userContext: new Map([["environment", "production"]]),
 	memory: memoryStorage,
