@@ -12,6 +12,8 @@ import { SecretaryAgent } from "./agents/secretary";
 import { agentTrainEndpoints } from "./endpoints/agent-trainning";
 import { agentEndpoints } from "./endpoints/agents";
 import { agentDocumentEndpoints } from "./endpoints/agents-docs";
+import { chatEndpoints } from "./endpoints/chat";
+import { conversationEndpoints } from "./endpoints/conversations";
 import { documentEndpoints } from "./endpoints/documents";
 import { fileEndpoints } from "./endpoints/files";
 import { financeiroEndpoints } from "./endpoints/financeiro";
@@ -22,7 +24,6 @@ import { supervisorEndpoints } from "./endpoints/supervisor";
 import { teamEndpoints } from "./endpoints/teams";
 import { uploadDirectEndpoints } from "./endpoints/upload-files";
 import { userEndpoints } from "./endpoints/user";
-import { conversationEndpoints } from "./endpoints/conversations";
 import { waEndpoints } from "./endpoints/wa";
 import { expenseApprovalWorkflow } from "./workflows";
 
@@ -46,6 +47,7 @@ registerCustomEndpoints(uploadDirectEndpoints);
 registerCustomEndpoints(fileEndpoints);
 registerCustomEndpoints(agentTrainEndpoints);
 registerCustomEndpoints(conversationEndpoints);
+registerCustomEndpoints(chatEndpoints);
 registerCustomEndpoints(waEndpoints);
 
 new VoltAgent({
