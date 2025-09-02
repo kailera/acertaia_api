@@ -14,7 +14,7 @@ export const userEndpoints: CustomEndpointDefinition[] = [
 			try {
 				const user = await loginUser(email, password);
 
-				console.log(`user encontrado: ${user}`);
+				console.log("user encontrado:", user);
 				return c.json(
 					{
 						success: true,
@@ -48,7 +48,7 @@ export const userEndpoints: CustomEndpointDefinition[] = [
 			try {
 				const createdInstance = await createInstance(instance, userId);
 
-				console.log(`user encontrado: ${instance}`);
+				console.log("user encontrado:", instance);
 				return c.json(
 					{
 						success: true,
