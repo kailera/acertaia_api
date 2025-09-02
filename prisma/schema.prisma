@@ -274,6 +274,7 @@ model Agent {
   rulesTo           Rule[]          @relation("RuleTo")
   trainingJobs      TrainingJob[]
   documents         AgentDocument[] // relação N:N via pivot
+  conversationAgents ConversationAgent[]
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
@@ -306,6 +307,16 @@ model AgentTag {
 
   @@unique([agentId, tag])
   @@index([tag])
+}
+
+model ConversationAgent {
+  conversationId String @id
+  agentId        String
+  agent          Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime @updatedAt
+
+  @@map("conversation_agents")
+  @@index([agentId])
 }
 
 model Team {
