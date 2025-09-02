@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Channel } from "@prisma/client";
+import { AgentType, Channel } from "@prisma/client";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -29,32 +29,61 @@ export const chatEndpoints: CustomEndpointDefinition[] = [
 					: randomUUID();
 
 			try {
-				const mapping = await prisma.agentChannel.findFirst({
-					where: {
-						channel: Channel.WEB,
-						primary: true,
-						agent: { ownerId: userId, status: "ATIVO" },
-					},
+				const existing = await prisma.conversationAgent.findUnique({
+					where: { conversationId: convId },
 					select: { agentId: true },
 				});
 
 				let reply = "";
-				if (mapping?.agentId) {
-					const agent = await buildAgentFromDB(mapping.agentId);
+				if (existing?.agentId) {
+					const agent = await buildAgentFromDB(existing.agentId);
 					const result = (await agent.generateText(input, {
 						userId,
 						conversationId: convId,
 					})) as unknown as { reply: string };
 					reply = result.reply;
 				} else {
-					const res = (await SecretaryChat(
-						input,
-						userId,
-						convId,
-					)) as unknown as {
-						reply: string;
-					};
-					reply = res.reply;
+					const mapping = await prisma.agentChannel.findFirst({
+						where: {
+							channel: Channel.WEB,
+							primary: true,
+							agent: { ownerId: userId, status: "ATIVO" },
+						},
+						select: { agentId: true },
+					});
+
+					let agentId: string | null = null;
+					if (mapping?.agentId) {
+						const agent = await buildAgentFromDB(mapping.agentId);
+						const result = (await agent.generateText(input, {
+							userId,
+							conversationId: convId,
+						})) as unknown as { reply: string };
+						reply = result.reply;
+						agentId = mapping.agentId;
+					} else {
+						const res = (await SecretaryChat(
+							input,
+							userId,
+							convId,
+						)) as unknown as {
+							reply: string;
+						};
+						reply = res.reply;
+						const sec = await prisma.agent.findFirst({
+							where: { ownerId: userId, tipo: AgentType.SECRETARIA },
+							select: { id: true },
+						});
+						agentId = sec?.id ?? null;
+					}
+
+					if (agentId) {
+						await prisma.conversationAgent.upsert({
+							where: { conversationId: convId },
+							update: { agentId },
+							create: { conversationId: convId, agentId },
+						});
+					}
 				}
 
 				return c.json(
