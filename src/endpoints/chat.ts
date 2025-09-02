@@ -29,6 +29,30 @@ export const chatEndpoints: CustomEndpointDefinition[] = [
 					: randomUUID();
 
 			try {
+				const assign = await prisma.conversationAgent.findUnique({
+					where: { conversationId: `assign_${userId}` },
+					select: { agentId: true },
+				});
+				if (assign?.agentId) {
+					const agent = await buildAgentFromDB(assign.agentId);
+					const result = (await agent.generateText(input, {
+						userId,
+						conversationId: convId,
+					})) as unknown as { reply: string };
+					await prisma.conversationAgent.upsert({
+						where: { conversationId: convId },
+						update: { agentId: assign.agentId },
+						create: { conversationId: convId, agentId: assign.agentId },
+					});
+					return c.json(
+						{
+							success: true,
+							data: { reply: result.reply, conversationId: convId },
+						},
+						201,
+					);
+				}
+
 				const existing = await prisma.conversationAgent.findUnique({
 					where: { conversationId: convId },
 					select: { agentId: true },
