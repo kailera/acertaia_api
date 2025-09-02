@@ -8,9 +8,8 @@ export async function ensureInstanceAccess(c: Context, instance: string) {
 
   const ownership = await prisma.whatsappNumbers.findFirst({
     where: { userId, instance },
-    select: { id: true },
+    select: { id: true, instance: true },
   });
   if (!ownership) throw new Error("instance not allowed for this user");
-  return { userId };
+  return { userId, evoInstance: ownership.instance };
 }
-

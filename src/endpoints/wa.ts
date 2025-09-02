@@ -116,6 +116,45 @@ export const waEndpoints: CustomEndpointDefinition[] = [
             saved.push(msg);
           }
         }
+
+        // Route to the right agent: primary WHATSAPP agent of the owner; fallback to Secretary
+        try {
+          if (saved.length) {
+            const owner = await prisma.whatsappNumbers.findFirst({
+              where: { instance },
+              select: { userId: true },
+            });
+            const input = saved.map((m) => m.message).filter(Boolean).join(". ");
+            const userId = saved[0]?.remoteJid;
+            const sendAt = saved[0]?.sendAt as Date | undefined;
+            const conversationId = saved[0]?.messageId && sendAt
+              ? `${saved[0].messageId}_${new Date(sendAt).getTime()}`
+              : "default_conversation";
+
+            if (owner?.userId && input && userId) {
+              const primary = await prisma.agentChannel.findFirst({
+                where: {
+                  channel: "WHATSAPP",
+                  primary: true,
+                  agent: { ownerId: owner.userId, status: "ATIVO" },
+                },
+                select: { agentId: true },
+              });
+
+              if (primary?.agentId) {
+                const { buildAgentFromDB } = await import("../agents/factory");
+                const agentInstance = await buildAgentFromDB(primary.agentId);
+                await agentInstance.generateText(input, { userId, conversationId });
+              } else {
+                const { SecretaryChat } = await import("../agents/secretary");
+                await SecretaryChat(input, userId, conversationId);
+              }
+            }
+          }
+        } catch (routeErr) {
+          console.error("routing error", routeErr);
+        }
+
         return c.json({ success: true, data: { count: saved.length } }, 201);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "error";
@@ -251,14 +290,15 @@ export const waEndpoints: CustomEndpointDefinition[] = [
     handler: async (c: Context): Promise<Response> => {
       const instance = c.req.param("instance");
       const body = await c.req.json().catch(() => ({} as any));
-      const dest = String(body.to || body.jid || body.remoteJid || "").trim();
+      const dest = String(body.number || body.to || body.jid || body.remoteJid || body.chatId || "").trim();
       const msg = String(body.text || body.message || body.body || "").trim();
       if (!dest || !msg) {
         return c.json({ success: false, message: "missing to or text" }, 400);
       }
       try {
-        await ensureInstanceAccess(c, instance);
-        const evoRes = await sendTextEvolution(instance, dest, msg);
+        const { evoInstance } = await ensureInstanceAccess(c, instance);
+        const instanceName = evoInstance || instance;
+        const evoRes = await sendTextEvolution(instanceName, dest, msg);
         const evoJson = await evoRes.json().catch(() => ({}));
         if (!evoRes.ok) {
           return c.json({ success: false, message: "evolution error", data: evoJson }, 502);
