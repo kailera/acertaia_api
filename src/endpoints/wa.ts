@@ -154,10 +154,18 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 							if (existing?.agentId) {
 								const { buildAgentFromDB } = await import("../agents/factory");
 								const agentInstance = await buildAgentFromDB(existing.agentId);
-								await agentInstance.generateText(input, {
+								const result = await agentInstance.generateText(input, {
 									userId,
 									conversationId,
 								});
+								const reply = (result as { reply?: string })?.reply;
+								if (reply) {
+									try {
+										await sendTextEvolution(instance, userId, reply);
+									} catch (sendErr) {
+										console.error("send error", sendErr);
+									}
+								}
 							} else {
 								const primary = await prisma.agentChannel.findFirst({
 									where: {
@@ -169,19 +177,26 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 								});
 
 								let agentId: string | null = null;
+								let reply: string | undefined;
 								if (primary?.agentId) {
 									const { buildAgentFromDB } = await import(
 										"../agents/factory"
 									);
 									const agentInstance = await buildAgentFromDB(primary.agentId);
-									await agentInstance.generateText(input, {
+									const result = await agentInstance.generateText(input, {
 										userId,
 										conversationId,
 									});
+									reply = (result as { reply?: string })?.reply;
 									agentId = primary.agentId;
 								} else {
 									const { SecretaryChat } = await import("../agents/secretary");
-									await SecretaryChat(input, userId, conversationId);
+									const result = await SecretaryChat(
+										input,
+										userId,
+										conversationId,
+									);
+									reply = (result as { reply?: string })?.reply;
 									const sec = await prisma.agent.findFirst({
 										where: {
 											ownerId: owner.userId,
@@ -190,6 +205,14 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 										select: { id: true },
 									});
 									agentId = sec?.id ?? null;
+								}
+
+								if (reply) {
+									try {
+										await sendTextEvolution(instance, userId, reply);
+									} catch (sendErr) {
+										console.error("send error", sendErr);
+									}
 								}
 
 								if (agentId) {
