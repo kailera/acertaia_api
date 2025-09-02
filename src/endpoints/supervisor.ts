@@ -46,4 +46,39 @@ export const supervisorEndpoints: CustomEndpointDefinition[] = [
 		},
 		description: "[privada] atualiza supervisor",
 	},
+
+	{
+		path: "/api/supervisor/assign",
+		method: "put" as const,
+		handler: async (c: Context): Promise<Response> => {
+			const body = await c.req.json().catch(() => ({}));
+			const { userId, agentId } = body as {
+				userId?: string;
+				agentId?: string;
+			};
+			if (!userId || !agentId)
+				return c.json({ ok: false, message: "invalid payload" }, 400);
+			await prisma.conversationAgent.upsert({
+				where: { conversationId: `assign_${userId}` },
+				update: { agentId },
+				create: { conversationId: `assign_${userId}`, agentId },
+			});
+			return c.json({ ok: true });
+		},
+		description: "[privada] vincula agente ao usuário",
+	},
+
+	{
+		path: "/api/supervisor/assign/:userId",
+		method: "get" as const,
+		handler: async (c: Context): Promise<Response> => {
+			const { userId } = c.req.param();
+			const res = await prisma.conversationAgent.findUnique({
+				where: { conversationId: `assign_${userId}` },
+				select: { agentId: true },
+			});
+			return c.json({ userId, agentId: res?.agentId ?? null });
+		},
+		description: "[privada] consulta agente vinculado ao usuário",
+	},
 ];
