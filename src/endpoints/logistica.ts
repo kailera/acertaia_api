@@ -1,7 +1,7 @@
+import { randomUUID } from "node:crypto";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { LogisticaChat } from "../agents/logistica";
-import { randomUUID } from "node:crypto";
 
 export const logisticaEndpoints: CustomEndpointDefinition[] = [
 	{
@@ -10,7 +10,10 @@ export const logisticaEndpoints: CustomEndpointDefinition[] = [
 		handler: async (c: Context): Promise<Response> => {
 			const body = await c.req.json();
 			const { input, userId, conversationId } = body;
-			const convId = conversationId && conversationId.length > 0 ? conversationId : randomUUID();
+			const convId =
+				conversationId && conversationId.length > 0
+					? conversationId
+					: randomUUID();
 
 			try {
 				const response = await LogisticaChat(input, userId, convId);

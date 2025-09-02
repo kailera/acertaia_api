@@ -1,9 +1,9 @@
+import { randomUUID } from "node:crypto";
 import type { AgentStatus, AgentType, Prisma } from "@prisma/client";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { z } from "zod";
 import { prisma } from "../utils/prisma";
-import { randomUUID } from "node:crypto";
 
 // ---- mapeadores (front -> enums do Prisma)
 const mapTipo = (t: string): AgentType => {

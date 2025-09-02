@@ -1,7 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { createTool } from "@voltagent/core";
 import { z } from "zod";
 import { prisma } from "../../utils/prisma";
-import { randomUUID } from "crypto";
 
 export const secretariaUpsertEnrollment = createTool({
 	name: "secretaria_upsert_enrollment",
@@ -52,21 +52,21 @@ export const secretariaUpsertEnrollment = createTool({
 		// 2) Upsert do aluno (prioridade por cpf > email > phone)
 		let studentId: string | null = null;
 		if (student.cpf) {
-			const rows = (await prisma.$queryRaw<{ id: string }[]>`
+			const rows = await prisma.$queryRaw<{ id: string }[]>`
 				SELECT id FROM secretaria_student WHERE lower(cpf) = lower(${student.cpf}) LIMIT 1
-			`);
+			`;
 			studentId = rows[0]?.id ?? null;
 		}
 		if (!studentId && student.email) {
-			const rows = (await prisma.$queryRaw<{ id: string }[]>`
+			const rows = await prisma.$queryRaw<{ id: string }[]>`
 				SELECT id FROM secretaria_student WHERE lower(email) = lower(${student.email}) LIMIT 1
-			`);
+			`;
 			studentId = rows[0]?.id ?? null;
 		}
 		if (!studentId && student.phone) {
-			const rows = (await prisma.$queryRaw<{ id: string }[]>`
+			const rows = await prisma.$queryRaw<{ id: string }[]>`
 				SELECT id FROM secretaria_student WHERE phone = ${student.phone} LIMIT 1
-			`);
+			`;
 			studentId = rows[0]?.id ?? null;
 		}
 
@@ -91,9 +91,11 @@ export const secretariaUpsertEnrollment = createTool({
 
 		// 3) Upsert da matrícula
 		let enrollmentId: string | null = null;
-		const enr = (await prisma.$queryRaw<{ id: string; status: string }[]>`
+		const enr = (
+			await prisma.$queryRaw<{ id: string; status: string }[]>`
 			SELECT id, status FROM secretaria_enrollment WHERE student_id = ${studentId} AND course = ${course} LIMIT 1
-		`)[0];
+		`
+		)[0];
 
 		if (!enr) {
 			const newId = randomUUID();
@@ -113,10 +115,13 @@ export const secretariaUpsertEnrollment = createTool({
 			`;
 		}
 
+		if (!studentId || !enrollmentId) {
+			throw new Error("failed to upsert enrollment");
+		}
 		return {
 			ok: true,
-			studentId: studentId!,
-			enrollmentId: enrollmentId!,
+			studentId,
+			enrollmentId,
 			status: finalStatus,
 		};
 	},
@@ -136,22 +141,24 @@ export const secretariaGetEnrollmentStatus = createTool({
 
 		let studentId: string | null = null;
 		if (isEmail) {
-			const rows = (await prisma.$queryRaw<{ id: string }[]>`
+			const rows = await prisma.$queryRaw<{ id: string }[]>`
 				SELECT id FROM secretaria_student WHERE lower(email) = lower(${key}) LIMIT 1
-			`);
+			`;
 			studentId = rows[0]?.id ?? null;
 		} else {
-			const rows = (await prisma.$queryRaw<{ id: string }[]>`
+			const rows = await prisma.$queryRaw<{ id: string }[]>`
 				SELECT id FROM secretaria_student WHERE lower(cpf) = lower(${key}) LIMIT 1
-			`);
+			`;
 			studentId = rows[0]?.id ?? null;
 		}
 
 		if (!studentId) return { ok: true, status: "nao_encontrado" } as const;
 
-		const enr = (await prisma.$queryRaw<{ id: string; status: string }[]>`
+		const enr = (
+			await prisma.$queryRaw<{ id: string; status: string }[]>`
 			SELECT id, status FROM secretaria_enrollment WHERE student_id = ${studentId} AND course = ${course} LIMIT 1
-		`)[0];
+		`
+		)[0];
 
 		if (!enr) return { ok: true, status: "nao_encontrado" } as const;
 
@@ -177,10 +184,18 @@ export const secretariaListRequirements = createTool({
 			UNIQUE(course, requirement)
 		)`;
 
-		const rows = await prisma.$queryRaw<{ requirement: string; required: boolean }[]>`
+		const rows = await prisma.$queryRaw<
+			{ requirement: string; required: boolean }[]
+		>`
 			SELECT requirement, required FROM secretaria_course_requirements WHERE course = ${course} ORDER BY requirement
 		`;
 
-		return { course, requirements: rows.map((r) => ({ text: r.requirement, required: r.required })) };
+		return {
+			course,
+			requirements: rows.map((r) => ({
+				text: r.requirement,
+				required: r.required,
+			})),
+		};
 	},
 });
