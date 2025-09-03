@@ -25,6 +25,7 @@ import { teamEndpoints } from "./endpoints/teams";
 import { uploadDirectEndpoints } from "./endpoints/upload-files";
 import { userEndpoints } from "./endpoints/user";
 import { whatsappEndpoints } from "./endpoints/whatsapp";
+import { memoryStorage } from "./utils/memory";
 import { expenseApprovalWorkflow } from "./workflows";
 
 // Create a logger instance
@@ -49,6 +50,10 @@ registerCustomEndpoints(agentTrainEndpoints);
 registerCustomEndpoints(conversationEndpoints);
 registerCustomEndpoints(chatEndpoints);
 registerCustomEndpoints(whatsappEndpoints);
+
+await (
+	memoryStorage as unknown as { initializeDatabase: () => Promise<void> }
+).initializeDatabase();
 
 new VoltAgent({
 	agents: {
