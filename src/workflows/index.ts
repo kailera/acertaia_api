@@ -1,5 +1,6 @@
 import { createWorkflowChain } from "@voltagent/core";
 import { z } from "zod";
+import { memoryStorage } from "../utils/memory";
 
 // ==============================================================================
 // Example: Human-in-the-Loop Expense Approval Workflow
@@ -66,6 +67,7 @@ export const expenseApprovalWorkflow = createWorkflowChain({
 		approvedBy: z.string(),
 		finalAmount: z.number(),
 	}),
+	memory: memoryStorage
 })
 	// Step 1: Validate expense and check if approval needed
 	.andThen({
