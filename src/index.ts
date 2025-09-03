@@ -1,7 +1,7 @@
 import {
-  VoltAgent,
-  VoltOpsClient,
-  registerCustomEndpoints,
+	VoltAgent,
+	VoltOpsClient,
+	registerCustomEndpoints,
 } from "@voltagent/core";
 import { createPinoLogger } from "@voltagent/logger";
 import "dotenv/config";
@@ -34,8 +34,8 @@ import { expenseApprovalWorkflow } from "./workflows";
 
 // Logger
 const logger = createPinoLogger({
-  name: "my-agent-app",
-  level: "info",
+	name: "my-agent-app",
+	level: "info",
 });
 
 // Registra endpoints uma única vez
@@ -61,37 +61,46 @@ const PORT = Number(process.env.PORT) || 3141;
 const HOST = "0.0.0.0";
 
 async function main() {
-  // inicializações assíncronas que antes estavam no topo
-  await (
-    memoryStorage as unknown as { initializeDatabase: () => Promise<void> }
-  ).initializeDatabase();
+	// inicializações assíncronas que antes estavam no topo
+	await (
+		memoryStorage as unknown as { initializeDatabase: () => Promise<void> }
+	).initializeDatabase();
 
-  const pg = new PostgresStorage({
-    connectionString: process.env.DATABASE_URL!, // usa o messages-db
-    // schema: "public", // se precisar customizar
-  });
+	const databaseUrl = process.env.DATABASE_URL;
+	if (!databaseUrl) {
+		throw new Error("DATABASE_URL not configured");
+	}
 
-  new VoltAgent({
-    agents: {
-      SDRAgent,
-      SecretaryAgent,
-      FinanceiroAgent,
-      LogisticaAgent,
-    },
-    workflows: {
-      expenseApprovalWorkflow,
-    },
-    logger,
-    voltOpsClient: new VoltOpsClient({
-      publicKey: process.env.VOLTAGENT_PUBLIC_KEY || "",
-      secretKey: process.env.VOLTAGENT_SECRET_KEY || "",
-    }),
-  });
+	const pg = new PostgresStorage({
+		connection: databaseUrl, // usa o messages-db
+		// schema: "public", // se precisar customizar
+	});
 
-  logger.info(`Boot OK (HOST=${HOST}, PORT=${PORT})`);
+	await (
+		pg as unknown as { initializeDatabase: () => Promise<void> }
+	).initializeDatabase();
+
+	new VoltAgent({
+		agents: {
+			SDRAgent,
+			SecretaryAgent,
+			FinanceiroAgent,
+			LogisticaAgent,
+		},
+		workflows: {
+			expenseApprovalWorkflow,
+		},
+		logger,
+		voltOpsClient: new VoltOpsClient({
+			publicKey: process.env.VOLTAGENT_PUBLIC_KEY || "",
+			secretKey: process.env.VOLTAGENT_SECRET_KEY || "",
+		}),
+	});
+
+	logger.info(`Boot OK (HOST=${HOST}, PORT=${PORT})`);
 }
 
 main().catch((err) => {
-  logger.error("Fatal bootstrap error", err);
-  process.exit(1);
+	logger.error("Fatal bootstrap error", err);
+	process.exit(1);
 });
