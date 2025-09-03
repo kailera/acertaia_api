@@ -62,9 +62,23 @@ const HOST = "0.0.0.0";
 
 async function main() {
 	// inicializações assíncronas que antes estavam no topo
-	await (
-		memoryStorage as unknown as { initializeDatabase: () => Promise<void> }
-	).initializeDatabase();
+	try {
+		await (
+			memoryStorage as unknown as {
+				initializeDatabase: () => Promise<void>;
+			}
+		).initializeDatabase();
+	} catch (err) {
+		const connection = (
+			memoryStorage as unknown as {
+				options?: { connection?: string };
+			}
+		).options?.connection;
+		logger.error(
+			`Memory database initialization failed (connection=${connection}): ${(err as Error).message}`,
+		);
+		throw new Error("Memory database initialization failed");
+	}
 
 	const databaseUrl = process.env.DATABASE_URL;
 	if (!databaseUrl) {
@@ -76,9 +90,18 @@ async function main() {
 		// schema: "public", // se precisar customizar
 	});
 
-	await (
-		pg as unknown as { initializeDatabase: () => Promise<void> }
-	).initializeDatabase();
+	try {
+		await (
+			pg as unknown as {
+				initializeDatabase: () => Promise<void>;
+			}
+		).initializeDatabase();
+	} catch (err) {
+		logger.error(
+			`PostgreSQL database initialization failed (connection=${databaseUrl}): ${(err as Error).message}`,
+		);
+		throw new Error("PostgreSQL database initialization failed");
+	}
 
 	new VoltAgent({
 		agents: {
