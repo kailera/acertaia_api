@@ -1,18 +1,21 @@
-version: "3.9"
 services:
   app:
-    container_name: coopec-acertaia-api 
+    container_name: coopec-acertaia-api
     build: .
     depends_on:
-      - messages-db
-      - memory-db
-      - qdrant
+      messages-db:
+        condition: service_healthy
+      memory-db:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
     environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
       DATABASE_URL: postgresql://postgres:postgres@messages-db:5432/voltagent
       MEMORY_DATABASE_URL: postgresql://postgres:postgres@memory-db:5432/voltagent_memory
       QDRANT_URL: http://qdrant:6333
       QDRANT_COLLECTION: voltagent-knowledge-base
-      # QDRANT_API_KEY: sua_chave (se precisar)
+      PORT: 3141
     ports:
       - "3141:3141"
 
@@ -24,6 +27,11 @@ services:
       POSTGRES_DB: voltagent
     volumes:
       - messages_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d voltagent"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
 
   memory-db:
     image: postgres:15
@@ -33,6 +41,11 @@ services:
       POSTGRES_DB: voltagent_memory
     volumes:
       - memory_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d voltagent_memory"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
 
   qdrant:
     image: qdrant/qdrant:latest
