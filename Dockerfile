@@ -60,6 +60,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 RUN mkdir -p /data && chown -R nodejs:nodejs /data
 ENV FILES_DIR=/data
 
+RUN mkdir -p /app/.voltagent/cache && chown -R nodejs:nodejs /app/.voltagent
 USER nodejs
 EXPOSE 3141
 
