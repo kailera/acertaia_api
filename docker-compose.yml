@@ -8,7 +8,6 @@ services:
       - memory-db
       - qdrant
     environment:
-      OPENAI_API_KEY: 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
       DATABASE_URL: postgresql://postgres:postgres@messages-db:5432/voltagent
       MEMORY_DATABASE_URL: postgresql://postgres:postgres@memory-db:5432/voltagent_memory
       QDRANT_URL: http://qdrant:6333
