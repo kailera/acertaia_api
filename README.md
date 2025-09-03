@@ -27,22 +27,29 @@ cd my-agent-app
 # Install dependencies
 npm install
 
-# Copy environment variables
+# Copy environment variables template
 cp .env.example .env
 ```
 
 ### Configuration
 
-Edit `.env` file with your API keys:
+Edit `.env` using the `.env.example` template. Key variables include:
 
-```env
-OPENAI_API_KEY=your-api-key-here
+- `DATABASE_URL` – PostgreSQL connection for chat and workflow data
+- `MEMORY_DATABASE_URL` – PostgreSQL connection for long-term memory
+- `OPENAI_API_KEY` – API key for OpenAI models
+- `QDRANT_URL` – Base URL of your Qdrant instance
+- `QDRANT_COLLECTION` – Qdrant collection name
+- `QDRANT_API_KEY` – (optional) Qdrant API key
+- `PORT` – Port for the HTTP server (defaults to 3141)
+- `VOLTAGENT_PUBLIC_KEY` / `VOLTAGENT_SECRET_KEY` – VoltOps keys for tracing (optional)
+- `MEMORY_STORAGE_LIMIT` – Maximum memory items to keep (optional)
+- `FILES_DIR` – Directory for uploaded files (optional)
+- `EMBED_MODEL` – Embedding model used for vectorization (optional)
+- `PINECONE_API_KEY`, `COHERE_API_KEY` – Additional provider keys (optional)
+- `EVOLUTION_URL`, `EVO_API_KEY`, `EVOLUTION_SENDTEXT_PATH`, `EVOLUTION_APIKEY_IN` – Evolution integration settings (optional)
 
-# VoltOps Platform (Optional)
-# Get your keys at https://console.voltagent.dev/tracing-setup
-# VOLTAGENT_PUBLIC_KEY=your-public-key
-# VOLTAGENT_SECRET_KEY=your-secret-key
-```
+The same variables are used for local development and the Docker setup.
 
 ### Running the Application
 
@@ -158,7 +165,7 @@ docker build -t my-agent-app .
 # Run container
 docker run -p 3141:3141 --env-file .env my-agent-app
 
-# Or use docker-compose
+# Or use docker-compose (reads variables from .env)
 docker-compose up
 ```
 
