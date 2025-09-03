@@ -67,7 +67,7 @@ export const expenseApprovalWorkflow = createWorkflowChain({
 		approvedBy: z.string(),
 		finalAmount: z.number(),
 	}),
-	memory: memoryStorage
+	memory: memoryStorage,
 })
 	// Step 1: Validate expense and check if approval needed
 	.andThen({
