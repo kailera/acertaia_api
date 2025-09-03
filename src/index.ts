@@ -24,7 +24,7 @@ import { supervisorEndpoints } from "./endpoints/supervisor";
 import { teamEndpoints } from "./endpoints/teams";
 import { uploadDirectEndpoints } from "./endpoints/upload-files";
 import { userEndpoints } from "./endpoints/user";
-import { waEndpoints } from "./endpoints/wa";
+import { whatsappEndpoints } from "./endpoints/whatsapp";
 import { expenseApprovalWorkflow } from "./workflows";
 
 // Create a logger instance
@@ -48,7 +48,7 @@ registerCustomEndpoints(fileEndpoints);
 registerCustomEndpoints(agentTrainEndpoints);
 registerCustomEndpoints(conversationEndpoints);
 registerCustomEndpoints(chatEndpoints);
-registerCustomEndpoints(waEndpoints);
+registerCustomEndpoints(whatsappEndpoints);
 
 new VoltAgent({
 	agents: {
