@@ -11,18 +11,23 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG RENDER_GIT_COMMIT
+ARG GIT_SHA
+# build app (tsc)
 RUN npm run build   # gera dist/index.js a partir de src/index.ts
+# capture build info (commit + timestamp)
+RUN echo "commit=${RENDER_GIT_COMMIT:-${GIT_SHA:-unknown}}\nbuilt_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > /app/.buildinfo
 
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=3141
 
 # só o necessário para rodar
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/prisma ./prisma
 COPY package*.json ./
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/.buildinfo ./.buildinfo
 COPY start.sh ./start.sh
 
 # ensure startup script is executable
