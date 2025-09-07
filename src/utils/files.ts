@@ -22,6 +22,36 @@ export function uniqueName(original: string) {
 	return `${stem}-${suffix}${ext}`;
 }
 
+// Gera um nome seguro (ASCII) para objetos em storage (e.g., Supabase).
+// - remove diacríticos
+// - minúsculas
+// - espaços e caracteres fora de [a-z0-9._-] viram '-'
+// - preserva extensão original (em minúsculas)
+// - limita base a 100 chars
+export function makeSafeObjectName(originalName: string) {
+	const dot = originalName.lastIndexOf(".");
+	const ext = dot >= 0 ? originalName.slice(dot).toLowerCase() : "";
+	const baseRaw = dot >= 0 ? originalName.slice(0, dot) : originalName;
+	const base = baseRaw
+		.normalize("NFKD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.toLowerCase()
+		.replace(/\s+/g, "-")
+		.replace(/[^a-z0-9._-]/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^[-_.]+|[-_.]+$/g, "");
+	const safeBase = (base || "file").slice(0, 100);
+	return `${safeBase}${ext}`;
+}
+
+export function uniqueSafeName(originalName: string) {
+	const safe = makeSafeObjectName(originalName);
+	const ext = path.extname(safe);
+	const stem = path.basename(safe, ext);
+	const suffix = crypto.randomBytes(8).toString("hex");
+	return `${stem}-${suffix}${ext}`;
+}
+
 export async function bufferFromBlob(webBlob: Blob) {
 	// c.req.formData() retorna Blob no runtime Web API; converte para Buffer
 	const ab = await webBlob.arrayBuffer();

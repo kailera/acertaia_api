@@ -1,5 +1,5 @@
 // Simple wrapper to call Evolution API
-import "dotenv/config";
+import "../utils/env";
 
 const EVO_URL = process.env.EVOLUTION_URL || "";
 const EVO_API_KEY = process.env.EVO_API_KEY || process.env.EVO_APIKEY || "";

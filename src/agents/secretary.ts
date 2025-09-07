@@ -29,16 +29,23 @@ export const SecretaryAgent = new Agent({
 
 // aquui é dado a resposta // retorne a resposta inteira e quebre em chunks
 export async function SecretaryChat(
-	input: string,
-	userId: string,
-	conversationId: string,
+    input: string,
+    userId: string,
+    conversationId: string,
 ) {
-	console.log(`User: ${input}`);
-	// Use streamText for interactive responses
-	const result = await SecretaryAgent.generateText(input, {
-		userId,
-		conversationId,
-	});
+    console.log(`User: ${input}`);
+    // Use streamText for interactive responses
+    const result = await SecretaryAgent.generateText(input, {
+        userId,
+        conversationId,
+    });
 
-	return result;
+    // Normalize to { reply: string }
+    const anyRes = result as unknown as Record<string, unknown>;
+    const reply =
+        (anyRes?.reply as string | undefined) ??
+        (anyRes?.text as string | undefined) ??
+        (typeof anyRes === "string" ? (anyRes as unknown as string) : undefined) ??
+        "";
+    return { reply } as { reply: string };
 }

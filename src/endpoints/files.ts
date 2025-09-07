@@ -5,6 +5,7 @@ import type { CustomEndpointDefinition } from "@voltagent/core";
 // api/files.endpoints.ts
 import type { Context } from "hono";
 import { prisma } from "../utils/prisma";
+import { createSignedUrl } from "../utils/supabase";
 
 export const fileEndpoints: CustomEndpointDefinition[] = [
 	{
@@ -43,34 +44,40 @@ export const fileEndpoints: CustomEndpointDefinition[] = [
 				);
 			}
 
-			// 3) Caminho físico
-			const meta = (d.meta as Record<string, unknown>) || {};
-			let p: string | undefined = meta.path as string | undefined;
-			if (!p)
-				return c.json({ success: false, message: "file path missing" }, 500);
+            // 3) Estratégia de leitura
+            const meta = (d.meta as Record<string, unknown>) || {};
+            const storage = String(meta.storage || "local");
 
-			p = path.normalize(p);
+            if (storage === "supabase") {
+                const bucket = String(meta.bucket || "");
+                const objectPath = String(meta.path || "");
+                if (!bucket || !objectPath) {
+                    return c.json({ success: false, message: "invalid storage metadata" }, 500);
+                }
+                try {
+                    const signed = await createSignedUrl({ bucket, path: objectPath }, 600);
+                    // Redirect so the client downloads/streams directly from Supabase
+                    return Response.redirect(signed, 302);
+                } catch (e) {
+                    return c.json({ success: false, message: "failed to sign URL" }, 500);
+                }
+            }
 
-			if (!fs.existsSync(p)) {
-				return c.json(
-					{ success: false, message: "file not found on disk", path: p },
-					410,
-				);
-			}
-
-			const fileStream = fs.createReadStream(p);
-			const webStream = Readable.toWeb(
-				fileStream,
-			) as unknown as ReadableStream<Uint8Array>;
-
-			const mime = d.mimeType || "application/octet-stream";
-			const isDownload = c.req.query("download") === "1";
-			const headers: Record<string, string> = { "Content-Type": mime };
-			if (isDownload)
-				headers["Content-Disposition"] =
-					`attachment; filename="${encodeURIComponent(d.name)}"`;
-
-			return new Response(webStream, { headers, status: 200 });
-		},
-	},
+            // Fallback: local filesystem
+            let p: string | undefined = meta.path as string | undefined;
+            if (!p)
+                return c.json({ success: false, message: "file path missing" }, 500);
+            p = path.normalize(p);
+            if (!fs.existsSync(p)) {
+                return c.json({ success: false, message: "file not found on disk", path: p }, 410);
+            }
+            const fileStream = fs.createReadStream(p);
+            const webStream = Readable.toWeb(fileStream) as unknown as ReadableStream<Uint8Array>;
+            const mime = d.mimeType || "application/octet-stream";
+            const isDownload = c.req.query("download") === "1";
+            const headers: Record<string, string> = { "Content-Type": mime };
+            if (isDownload) headers["Content-Disposition"] = `attachment; filename="${encodeURIComponent(d.name)}"`;
+            return new Response(webStream, { headers, status: 200 });
+        },
+    },
 ];

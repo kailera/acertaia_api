@@ -8,10 +8,16 @@ export const userEndpoints: CustomEndpointDefinition[] = [
 		path: "/api/login",
 		method: "post" as const,
 		handler: async (c: Context): Promise<Response> => {
-			const body = await c.req.json();
-			const { email, password } = body;
-
 			try {
+				const body = await c.req.json().catch(() => null);
+				if (!body || typeof body !== "object")
+					return c.json({ success: false, message: "Invalid JSON body" }, 400);
+				const { email, password } = body as { email?: string; password?: string };
+				if (!email || !password)
+					return c.json(
+						{ success: false, message: "email and password are required" },
+						400,
+					);
 				const user = await loginUser(email, password);
 
 				console.log("user encontrado:", user);
@@ -42,10 +48,16 @@ export const userEndpoints: CustomEndpointDefinition[] = [
 		path: "/api/instance",
 		method: "post" as const,
 		handler: async (c: Context): Promise<Response> => {
-			const body = await c.req.json();
-			const { instance, userId } = body;
-
 			try {
+				const body = await c.req.json().catch(() => null);
+				if (!body || typeof body !== "object")
+					return c.json({ success: false, message: "Invalid JSON body" }, 400);
+				const { instance, userId } = body as { instance?: string; userId?: string };
+				if (!instance || !userId)
+					return c.json(
+						{ success: false, message: "instance and userId are required" },
+						400,
+					);
 				const createdInstance = await createInstance(instance, userId);
 
 				console.log("user encontrado:", instance);

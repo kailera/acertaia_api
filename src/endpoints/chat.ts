@@ -7,6 +7,18 @@ import { buildAgentFromDB } from "../agents/factory";
 import { SecretaryChat } from "../agents/secretary";
 import { prisma } from "../utils/prisma";
 
+function getReply(res: unknown): string {
+    const r = res as any;
+    return (
+        r?.reply ??
+        r?.text ??
+        r?.output_text ??
+        r?.content ??
+        (Array.isArray(r?.choices) && (r.choices[0]?.message?.content?.[0]?.text || r.choices[0]?.message?.content)) ??
+        (typeof r === "string" ? r : "")
+    );
+}
+
 const ChatPayload = z.object({
 	input: z.string().min(1),
 	userId: z.string().min(1),
@@ -38,7 +50,8 @@ export const chatEndpoints: CustomEndpointDefinition[] = [
 					const result = (await agent.generateText(input, {
 						userId,
 						conversationId: convId,
-					})) as unknown as { reply: string };
+					}));
+					const reply = getReply(result);
 					await prisma.conversationAgent.upsert({
 						where: { conversationId: convId },
 						update: { agentId: assign.agentId },
@@ -47,7 +60,7 @@ export const chatEndpoints: CustomEndpointDefinition[] = [
 					return c.json(
 						{
 							success: true,
-							data: { reply: result.reply, conversationId: convId },
+							data: { reply, conversationId: convId },
 						},
 						201,
 					);
@@ -64,8 +77,8 @@ export const chatEndpoints: CustomEndpointDefinition[] = [
 					const result = (await agent.generateText(input, {
 						userId,
 						conversationId: convId,
-					})) as unknown as { reply: string };
-					reply = result.reply;
+					}));
+					reply = getReply(result);
 				} else {
 					const mapping = await prisma.agentChannel.findFirst({
 						where: {
@@ -82,8 +95,8 @@ export const chatEndpoints: CustomEndpointDefinition[] = [
 						const result = (await agent.generateText(input, {
 							userId,
 							conversationId: convId,
-						})) as unknown as { reply: string };
-						reply = result.reply;
+						}));
+						reply = getReply(result);
 						agentId = mapping.agentId;
 					} else {
 						const res = (await SecretaryChat(

@@ -18,7 +18,7 @@ export const whatsappEndpoints: CustomEndpointDefinition[] = [
 		path: "/api/message-upsert",
 		method: "post" as const,
 		handler: async (c: Context): Promise<Response> => {
-			const body = await c.req.json();
+			const body = await c.req.json().catch(() => ({}));
 			const { parsedMessages } = body as { parsedMessages: ParsedMessage[] };
 			// salvar a mensagem no banco de dados
 			try {

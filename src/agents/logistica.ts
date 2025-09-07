@@ -18,14 +18,20 @@ export const LogisticaAgent = new Agent({
 });
 
 export async function LogisticaChat(
-	input: string,
-	userId: string,
-	conversationId: string,
+    input: string,
+    userId: string,
+    conversationId: string,
 ) {
-	console.log(`User: ${input}`);
-	const result = await LogisticaAgent.generateText(input, {
-		userId,
-		conversationId,
-	});
-	return result;
+    console.log(`User: ${input}`);
+    const result = await LogisticaAgent.generateText(input, {
+        userId,
+        conversationId,
+    });
+    const anyRes = result as unknown as Record<string, unknown>;
+    const reply =
+        (anyRes?.reply as string | undefined) ??
+        (anyRes?.text as string | undefined) ??
+        (typeof anyRes === "string" ? (anyRes as unknown as string) : undefined) ??
+        "";
+    return { reply } as { reply: string };
 }

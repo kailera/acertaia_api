@@ -135,6 +135,28 @@ export const secretariaGetEnrollmentStatus = createTool({
 		course: z.string().describe("curso da matrícula"),
 	}),
 	execute: async ({ cpfOrEmail, course }) => {
+		// Garantir DDL mínima (idempotente) para evitar erro 42P01 em ambientes limpos
+		await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS secretaria_student (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			cpf TEXT,
+			email TEXT,
+			phone TEXT,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		)`;
+		await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS secretaria_student_cpf_uq ON secretaria_student((lower(cpf))) WHERE cpf IS NOT NULL`;
+		await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS secretaria_student_email_uq ON secretaria_student((lower(email))) WHERE email IS NOT NULL`;
+		await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS secretaria_enrollment (
+			id TEXT PRIMARY KEY,
+			student_id TEXT NOT NULL REFERENCES secretaria_student(id) ON DELETE CASCADE,
+			course TEXT NOT NULL,
+			status TEXT NOT NULL,
+			notes TEXT,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			UNIQUE(student_id, course)
+		)`;
 		// Consultar Postgres: localizar aluno por CPF ou email e retornar status da matrícula no curso
 		const key = cpfOrEmail.trim();
 		const isEmail = key.includes("@");

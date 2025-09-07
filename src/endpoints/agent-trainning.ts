@@ -14,6 +14,8 @@ export const agentTrainEndpoints: CustomEndpointDefinition[] = [
 				return c.json({ success: false, message: "missing userId" }, 401);
 			const id = c.req.param("id");
 
+			console.info(`[train] request received: agentId=${id} userId=${userId}`);
+
 			const agent = await prisma.agent.findUnique({ where: { id } });
 			if (!agent)
 				return c.json({ success: false, message: "agent not found" }, 404);
@@ -24,7 +26,10 @@ export const agentTrainEndpoints: CustomEndpointDefinition[] = [
 				data: { agentId: id, status: "PENDING" },
 			});
 
+			console.info(`[train] job queued: jobId=${job.id} agentId=${id}`);
+
 			startAgentTraining(job.id).catch(async (err: unknown) => {
+				console.error(`[train] job failed: jobId=${job.id}`, err);
 				await prisma.trainingJob.update({
 					where: { id: job.id },
 					data: {

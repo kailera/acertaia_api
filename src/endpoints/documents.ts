@@ -48,6 +48,44 @@ export const documentEndpoints: CustomEndpointDefinition[] = [
 		description: "[privada] lista documentos do usuário (filtrável por kind)",
 	},
 
+	// LIST AGENTS LINKED TO A DOCUMENT (efficient reverse lookup)
+	{
+		path: "/api/documents/:id/agents",
+		method: "get" as const,
+		handler: async (c: Context): Promise<Response> => {
+			const userId = c.req.header("x-user-id");
+			if (!userId)
+				return c.json({ success: false, message: "missing userId" }, 401);
+
+			const id = c.req.param("id");
+			// Ensure the document belongs to the user
+			const doc = await prisma.document.findFirst({ where: { id, ownerId: userId } });
+			if (!doc) return c.json({ success: false, message: "not found" }, 404);
+
+			const links = await prisma.agentDocument.findMany({
+				where: { documentId: id },
+				include: { agent: { select: { id: true, nome: true, tipo: true, status: true, isTemplate: true } } },
+				orderBy: { createdAt: "desc" },
+			});
+
+			const data = links.map((l) => ({
+				agent: {
+					id: l.agent.id,
+					nome: l.agent.nome,
+					tipo: l.agent.tipo,
+					status: l.agent.status,
+					isTemplate: l.agent.isTemplate,
+				},
+				role: l.role ?? undefined,
+				linkId: l.id,
+				assignedAt: l.assignedAt,
+			}));
+
+			return c.json({ success: true, data });
+		},
+		description: "[privada] lista agentes vinculados a um documento",
+	},
+
 	// CREATE
 	{
 		path: "/api/documents",

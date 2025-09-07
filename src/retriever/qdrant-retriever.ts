@@ -4,7 +4,7 @@ import {
 	type RetrieveOptions,
 } from "@voltagent/core";
 import { EMBED_MODEL, openaiClient } from "../utils/openai";
-import { QDRANT_COLLECTION, qdrant } from "../vector/qdrant";
+import { QDRANT_COLLECTION, qdrant, ensureCollection } from "../vector/qdrant";
 
 const openai = openaiClient;
 
@@ -44,13 +44,7 @@ export function makeQdrantRetriever(agentId: string) {
 			if (!text.trim()) return "No query text provided.";
 
 			const vector = await embed(text);
-			const results = (await qdrant.search(QDRANT_COLLECTION, {
-				vector,
-				limit: 6,
-				with_payload: true,
-				score_threshold: 0.2,
-				filter: { must: [{ key: "agentId", match: { value: agentId } }] },
-			})) as Array<{
+			let results: Array<{
 				id: string | number;
 				score?: number;
 				payload?: {
@@ -59,7 +53,36 @@ export function makeQdrantRetriever(agentId: string) {
 					kind?: string;
 					text?: string;
 				};
-			}>;
+			}> = [];
+
+			try {
+				results = (await qdrant.search(QDRANT_COLLECTION, {
+					vector,
+					limit: 6,
+					with_payload: true,
+					score_threshold: 0.2,
+					filter: { must: [{ key: "agentId", match: { value: agentId } }] },
+				})) as Array<any>;
+			} catch (e: any) {
+				const msg = String(e?.message || "");
+				const notFound =
+					e?.status === 404 ||
+					e?.originalError?.status === 404 ||
+					/doesn\'t exist|does not exist/i.test(
+						String(e?.originalError?.data?.status?.error || msg),
+					);
+				if (notFound) {
+					// Tenta criar a coleção automaticamente e retorna contexto vazio
+					try {
+						await ensureCollection(1536);
+					} catch {
+						/* ignore ensure failure */
+					}
+					return "No relevant documents found in the knowledge base.";
+				}
+				// Outros erros: retorne contexto vazio para não quebrar o fluxo de chat
+				return "No relevant documents found in the knowledge base.";
+			}
 
 			if (!results?.length)
 				return "No relevant documents found in the knowledge base.";

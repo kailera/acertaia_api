@@ -4,7 +4,7 @@ import {
 	registerCustomEndpoints,
 } from "@voltagent/core";
 import { createPinoLogger } from "@voltagent/logger";
-import "dotenv/config";
+import "./utils/env";
 
 import { FinanceiroAgent } from "./agents/financeiro";
 import { LogisticaAgent } from "./agents/logistica";
@@ -29,6 +29,7 @@ import { userEndpoints } from "./endpoints/user";
 
 import { PostgresStorage } from "@voltagent/postgres";
 import { whatsappEndpoints } from "./endpoints/whatsapp";
+import { waEndpoints } from "./endpoints/wa";
 import { memoryStorage } from "./utils/memory";
 import { expenseApprovalWorkflow } from "./workflows";
 
@@ -55,6 +56,7 @@ registerCustomEndpoints(agentTrainEndpoints);
 registerCustomEndpoints(conversationEndpoints);
 registerCustomEndpoints(chatEndpoints);
 registerCustomEndpoints(whatsappEndpoints);
+registerCustomEndpoints(waEndpoints);
 
 // Se seu server precisar PORT/HOST, use estas vars (o VoltAgent pode cuidar disso internamente)
 const PORT = Number(process.env.PORT) || 3141;

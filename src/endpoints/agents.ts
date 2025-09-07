@@ -99,7 +99,10 @@ export const agentEndpoints: CustomEndpointDefinition[] = [
 		method: "get" as const,
 		handler: async (c: Context): Promise<Response> => {
 			const userId = c.req.header("x-user-id"); // opcional: filtra por dono
-			const where = userId ? { ownerId: userId } : undefined;
+			// Retorna agentes do usuário + templates globais quando userId estiver presente
+			const where = userId
+				? { OR: [{ ownerId: userId }, { isTemplate: true }] }
+				: { isTemplate: true };
 
 			const rows = await prisma.agent.findMany({
 				where,
@@ -352,8 +355,9 @@ export const agentEndpoints: CustomEndpointDefinition[] = [
 				return c.json({ success: false, message: "missing userId" }, 401);
 
 			const id = c.req.param("id");
+			// Permitir uso de templates globais além dos do usuário
 			const agent = await prisma.agent.findFirst({
-				where: { id, ownerId: userId },
+				where: { id, OR: [{ ownerId: userId }, { isTemplate: true }] },
 			});
 			if (!agent) return c.json({ success: false, message: "not found" }, 404);
 
@@ -373,8 +377,26 @@ export const agentEndpoints: CustomEndpointDefinition[] = [
 				conversationId: convId,
 			});
 
+			// Vincula a conversa ao agente para que a UI possa recuperar depois
+			try {
+				await prisma.conversationAgent.upsert({
+					where: { conversationId: convId },
+					update: { agentId: id },
+					create: { conversationId: convId, agentId: id },
+				});
+			} catch {}
+
+			const r: any = result as any;
+			const reply =
+				r?.reply ??
+				r?.text ??
+				r?.output_text ??
+				r?.content ??
+				(Array.isArray(r?.choices) && (r.choices[0]?.message?.content?.[0]?.text || r.choices[0]?.message?.content)) ??
+				(typeof r === "string" ? r : "");
+
 			return c.json(
-				{ success: true, data: { ...result, conversationId: convId } },
+				{ success: true, data: { reply, conversationId: convId } },
 				201,
 			);
 		},

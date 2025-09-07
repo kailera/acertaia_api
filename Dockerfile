@@ -23,6 +23,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/prisma ./prisma
 COPY package*.json ./
 COPY --from=builder /app/dist ./dist
+COPY start.sh ./start.sh
+
+# ensure startup script is executable
+RUN chmod +x ./start.sh
 
 # usuário não-root
 RUN addgroup -S app && adduser -S app -G app && chown -R app:app /app
@@ -31,4 +35,4 @@ USER app
 # garanta que seu server usa PORT e "0.0.0.0"
 # Express: app.listen(PORT,"0.0.0.0", ...)
 # Fastify: fastify.listen({ port: PORT, host: "0.0.0.0" })
-CMD ["npm","start"]
+CMD ["sh","-c","./start.sh"]
