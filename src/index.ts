@@ -115,6 +115,10 @@ async function main() {
 		workflows: {
 			expenseApprovalWorkflow,
 		},
+		server: {
+			autoStart: true,
+			port: PORT,
+		},
 		logger,
 		voltOpsClient: new VoltOpsClient({
 			publicKey: process.env.VOLTAGENT_PUBLIC_KEY || "",
