@@ -18,14 +18,20 @@ export const userEndpoints: CustomEndpointDefinition[] = [
 						{ success: false, message: "email and password are required" },
 						400,
 					);
-				const user = await loginUser(email, password);
+				const result = await loginUser(email, password);
+				if(!result.success){
+					return c.json({
+						success:false, message: "Invalid Credentials"
+					},
+					401
+				);
+				}
 
-				console.log("user encontrado:", user);
 				return c.json(
 					{
 						success: true,
 						message: "Login successful",
-						data: user,
+						data: result.user,
 					},
 					201,
 				);
