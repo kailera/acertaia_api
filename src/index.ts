@@ -32,6 +32,7 @@ import { whatsappEndpoints } from "./endpoints/whatsapp";
 import { waEndpoints } from "./endpoints/wa";
 import { memoryStorage } from "./utils/memory";
 import { expenseApprovalWorkflow } from "./workflows";
+import { initPrisma } from "./utils/prisma";
 
 // Logger
 const logger = createPinoLogger({
@@ -63,6 +64,7 @@ const PORT = Number(process.env.PORT) || 3141;
 const HOST = "0.0.0.0";
 
 async function main() {
+	await initPrisma();
 	// inicializações assíncronas que antes estavam no topo
 	try {
 		await (
