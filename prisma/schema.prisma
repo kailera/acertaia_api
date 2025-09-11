@@ -27,6 +27,12 @@ model Tenant {
   updatedAt   DateTime    @updatedAt
 
   @@map("tenant")
+  EndoMaterial EndoMaterial[]
+  EndoPost EndoPost[]
+  InternalAction InternalAction[]
+  EndoItem EndoItem[]
+  SellerKpiDaily SellerKpiDaily[]
+  TeamKpiDaily TeamKpiDaily[]
 }
 
 model User {
@@ -49,6 +55,7 @@ model User {
 
   @@map("user")
   @@index([tenantId])
+  SellerKpiDaily SellerKpiDaily[]
 }
 
 enum Role {
@@ -358,6 +365,7 @@ model Team {
   leads   Lead[]
 
   @@index([tenantId])
+  TeamKpiDaily TeamKpiDaily[]
 }
 
 // Membros do time, com ordenação (prioridade)
@@ -960,4 +968,141 @@ model CampaignReport {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ---------------------- Endomarketing -----------------------
+
+model EndoMaterial {
+  id         String       @id @default(cuid())
+  tenantId   String
+  tenant     Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  title      String
+  description String?
+  type       MaterialType
+  url        String?
+  categories String[]
+  publishedAt DateTime?   @default(now())
+
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([tenantId])
+}
+
+enum MaterialType{
+  PDF
+  IMAGEM
+  VIDEO
+}
+
+// Feed interno (posts curtos)
+model EndoPost {
+  id         String     @id @default(cuid())
+  tenantId   String
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  tipo       EndoItemType 
+  titulo     String
+  corpo      String
+  autor      String
+  publicadoEm DateTime   @default(now())
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([tenantId])
+}
+
+// Pesquisas de clima, alertas e notificações
+model EndoItem {
+  id         String       @id @default(cuid())
+  tenantId   String
+  tenant     Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  tipo       EndoItemType // PESQUISA | ALERTA | AVISO | RECONHECIMENTO
+  mensagem   String
+  status     EndoStatus   @default(ATIVO)
+  criadoEm   DateTime     @default(now())
+  expiraEm   DateTime?
+
+  // métricas de participação (ex.: n respostas, score médio)
+  participacao Json?
+
+  @@index([tenantId, tipo])
+  @@index([tenantId, status])
+}
+
+enum EndoItemType {
+PESQUISA
+ ALERTA
+ AVISO 
+ RECONHECIMENTO
+}
+
+enum EndoStatus{
+  ATIVO
+  FRIO
+}
+// Criação de campanhas internas, enquetes e comunicados
+model InternalAction {
+  id         String            @id @default(cuid())
+  tenantId   String
+  tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  tipo       InternalActionType
+  titulo     String
+  conteudo   String
+  iniciaEm   DateTime?
+  terminaEm  DateTime?
+  publico    String?           // ex.: "SDR A", "Todos", tags
+
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([tenantId, tipo])
+}
+
+enum InternalActionType{
+  REVISAO
+  NUTRICAO
+  REENGAJAMENTO
+}
+
+// --------------------- KPIs (Snapshots) ---------------------
+// Para leitura rápida da tela. Popule por job ou triggers.
+
+model SellerKpiDaily {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  date         DateTime // YYYY-MM-DD (use 00:00Z)
+  sellerId     String
+  seller       User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  atendimentosDia   Int     @default(0)
+  primeiraRespMin   Float   @default(0)
+  conversaoPct      Float   @default(0)
+  slaPct            Float   @default(0)
+  receitaCents      Int     @default(0)
+
+  @@unique([tenantId, date, sellerId])
+  @@index([tenantId, date])
+}
+
+model TeamKpiDaily {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  date         DateTime // YYYY-MM-DD
+  teamId       String
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  primeiraRespMin Float @default(0)
+  leadsRecebidos  Int   @default(0)
+
+  @@unique([tenantId, date, teamId])
+  @@index([tenantId, date])
 }
