@@ -65,6 +65,10 @@ npm run build
 npm start
 ```
 
+### Autenticação
+
+Todas as chamadas para a API devem incluir o cabeçalho `Authorization: Bearer <token>` ou `x-api-key`. Requisições sem uma credencial válida receberão `401 Unauthorized`.
+
 ## 🎯 Features
 
 This VoltAgent application includes:
