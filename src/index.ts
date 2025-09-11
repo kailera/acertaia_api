@@ -31,6 +31,7 @@ import { userEndpoints } from "./endpoints/user";
 import { contactEndpoints } from "./endpoints/contacts";
 import { campaignEndpoints } from "./endpoints/campaigns";
 import { dealEndpoints } from "./endpoints/deals";
+import { slaConfigEndpoints } from "./endpoints/sla-configs";
 
 import { PostgresStorage } from "@voltagent/postgres";
 import { waEndpoints } from "./endpoints/wa";
@@ -74,6 +75,7 @@ registerWithCors(chatEndpoints);
 registerWithCors(contactEndpoints);
 registerWithCors(campaignEndpoints);
 registerWithCors(dealEndpoints);
+registerWithCors(slaConfigEndpoints);
 registerWithCors(whatsappEndpoints);
 registerWithCors(waEndpoints);
 
