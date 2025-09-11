@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { AgentStatus, AgentType, Prisma } from "@prisma/client";
+import type { AgentStatus, AgentType, Channel, Prisma } from "@prisma/client";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -22,8 +22,8 @@ const mapStatus = (s?: string): AgentStatus =>
 	s === "PAUSADO" ? "PAUSADO" : s === "RASCUNHO" ? "RASCUNHO" : "ATIVO";
 
 // se seus canais existem como enum Channel no Prisma, use as strings do enum do BD:
-const mapChannel = (c: string) => {
-	const map = {
+const mapChannel = (c: string): Channel => {
+	const map: Record<string, Channel> = {
 		WhatsApp: "WHATSAPP",
 		Web: "WEB",
 		Instagram: "INSTAGRAM",
@@ -31,10 +31,13 @@ const mapChannel = (c: string) => {
 		Email: "EMAIL",
 		Telegram: "TELEGRAM",
 		Facebook: "FACEBOOK",
-	} as const;
-	const res = map[c as keyof typeof map];
+		Meta: "META",
+		Google: "GOOGLE",
+		"QR Code": "QR_CODE",
+	};
+	const res = map[c];
 	if (!res) throw new Error(`canal inválido: ${c}`);
-	return res; // string do enum do BD
+	return res;
 };
 
 // ---- mapeadores (BD -> rótulos da UI) para o GET
@@ -68,6 +71,12 @@ const channelToLabel = (c: string) => {
 			return "Telegram";
 		case "FACEBOOK":
 			return "Facebook";
+		case "META":
+			return "Meta";
+		case "GOOGLE":
+			return "Google";
+		case "QR_CODE":
+			return "QR Code";
 		default:
 			return c;
 	}
@@ -386,13 +395,16 @@ export const agentEndpoints: CustomEndpointDefinition[] = [
 				});
 			} catch {}
 
+			// biome-ignore lint/suspicious/noExplicitAny: dynamic agent result shape
 			const r: any = result as any;
 			const reply =
 				r?.reply ??
 				r?.text ??
 				r?.output_text ??
 				r?.content ??
-				(Array.isArray(r?.choices) && (r.choices[0]?.message?.content?.[0]?.text || r.choices[0]?.message?.content)) ??
+				(Array.isArray(r?.choices) &&
+					(r.choices[0]?.message?.content?.[0]?.text ||
+						r.choices[0]?.message?.content)) ??
 				(typeof r === "string" ? r : "");
 
 			return c.json(
