@@ -15,9 +15,11 @@ datasource db {
 }
 
 model Tenant {
-  id    String @id @default(cuid())
-  name  String
-  users User[]
+  id          String       @id @default(cuid())
+  name        String
+  users       User[]
+  teams       Team[]
+  teamMembers TeamMember[]
 
   @@map("tenant")
 }
@@ -333,27 +335,35 @@ model ConversationAgent {
 model Team {
   id        String   @id @default(cuid())
   nome      String
+  name      String?
   ativo     Boolean  @default(true)
   color     String?
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   membros TeamMember[]
   regras  Rule[]
+
+  @@index([tenantId])
 }
 
 // Membros do time, com ordenação (prioridade)
 model TeamMember {
-  id      Int    @id @default(autoincrement())
-  teamId  String
-  agentId String
-  pos     Int    @default(0) // ordem do agente no time
+  id       Int    @id @default(autoincrement())
+  teamId   String
+  agentId  String
+  tenantId String
+  pos      Int    @default(0) // ordem do agente no time
 
-  team  Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  agent  Agent  @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 
   @@unique([teamId, agentId])
   @@index([teamId, pos])
+  @@index([tenantId])
 }
 
 // ---------- Regras / Fluxo ----------
