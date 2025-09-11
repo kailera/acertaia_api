@@ -1,4 +1,5 @@
 import {
+	type CustomEndpointDefinition,
 	VoltAgent,
 	VoltOpsClient,
 	registerCustomEndpoints,
@@ -28,11 +29,12 @@ import { uploadDirectEndpoints } from "./endpoints/upload-files";
 import { userEndpoints } from "./endpoints/user";
 
 import { PostgresStorage } from "@voltagent/postgres";
-import { whatsappEndpoints } from "./endpoints/whatsapp";
 import { waEndpoints } from "./endpoints/wa";
+import { whatsappEndpoints } from "./endpoints/whatsapp";
 import { memoryStorage } from "./utils/memory";
-import { expenseApprovalWorkflow } from "./workflows";
 import { initPrisma } from "./utils/prisma";
+import withCORS from "./utils/with-cors";
+import { expenseApprovalWorkflow } from "./workflows";
 
 // Logger
 const logger = createPinoLogger({
@@ -41,23 +43,31 @@ const logger = createPinoLogger({
 });
 
 // Registra endpoints uma única vez
-registerCustomEndpoints(userEndpoints);
-registerCustomEndpoints(srdEndpoints);
-registerCustomEndpoints(secretaryEndpoints);
-registerCustomEndpoints(financeiroEndpoints);
-registerCustomEndpoints(logisticaEndpoints);
-registerCustomEndpoints(supervisorEndpoints);
-registerCustomEndpoints(agentEndpoints);
-registerCustomEndpoints(teamEndpoints);
-registerCustomEndpoints(documentEndpoints);
-registerCustomEndpoints(agentDocumentEndpoints);
-registerCustomEndpoints(uploadDirectEndpoints);
-registerCustomEndpoints(fileEndpoints);
-registerCustomEndpoints(agentTrainEndpoints);
-registerCustomEndpoints(conversationEndpoints);
-registerCustomEndpoints(chatEndpoints);
-registerCustomEndpoints(whatsappEndpoints);
-registerCustomEndpoints(waEndpoints);
+const registerWithCors = (endpoints: CustomEndpointDefinition[]) =>
+	registerCustomEndpoints(
+		endpoints.map((endpoint) => ({
+			...endpoint,
+			handler: withCORS(endpoint.handler),
+		})),
+	);
+
+registerWithCors(userEndpoints);
+registerWithCors(srdEndpoints);
+registerWithCors(secretaryEndpoints);
+registerWithCors(financeiroEndpoints);
+registerWithCors(logisticaEndpoints);
+registerWithCors(supervisorEndpoints);
+registerWithCors(agentEndpoints);
+registerWithCors(teamEndpoints);
+registerWithCors(documentEndpoints);
+registerWithCors(agentDocumentEndpoints);
+registerWithCors(uploadDirectEndpoints);
+registerWithCors(fileEndpoints);
+registerWithCors(agentTrainEndpoints);
+registerWithCors(conversationEndpoints);
+registerWithCors(chatEndpoints);
+registerWithCors(whatsappEndpoints);
+registerWithCors(waEndpoints);
 
 // Se seu server precisar PORT/HOST, use estas vars (o VoltAgent pode cuidar disso internamente)
 const PORT = Number(process.env.PORT) || 3141;

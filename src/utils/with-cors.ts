@@ -1,12 +1,18 @@
 import type { Context } from "hono";
 
-export default function withCORS(handler: (c: Context) => Promise<Response>) {
+export default function withCORS(
+	handler: (c: Context) => Response | Promise<Response>,
+) {
+	const allowedOrigin = process.env.ALLOWED_ORIGIN;
+
 	return async (c: Context): Promise<Response> => {
-		c.res.headers.set(
-			"Access-Control-Allow-Origin",
-			"acertaia-frontend.vercel.app",
-		);
-		c.res.headers.set("Access-Control-Allow-Credentials", "true");
+		const origin = c.req.header("Origin");
+
+		if (allowedOrigin && origin === allowedOrigin) {
+			c.res.headers.set("Access-Control-Allow-Origin", allowedOrigin);
+			c.res.headers.set("Access-Control-Allow-Credentials", "true");
+		}
+
 		c.res.headers.set(
 			"Access-Control-Allow-Headers",
 			"Content-Type, Authorization",

@@ -42,6 +42,7 @@ Edit `.env` using the `.env.example` template. Key variables include:
 - `QDRANT_COLLECTION` – Qdrant collection name
 - `QDRANT_API_KEY` – (optional) Qdrant API key
 - `PORT` – Port for the HTTP server (defaults to 3141)
+- `ALLOWED_ORIGIN` – Allowed CORS origin (set to `https://acertaia-frontend.vercel.app` in production)
 - `VOLTAGENT_PUBLIC_KEY` / `VOLTAGENT_SECRET_KEY` – VoltOps keys for tracing (optional)
 - `MEMORY_STORAGE_LIMIT` – Maximum memory items to keep (optional)
 - `FILES_DIR` – Directory for uploaded files (optional)
