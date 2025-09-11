@@ -34,10 +34,11 @@
     "bcryptjs": "^3.0.2",
     "cohere-ai": "^7.18.1",
     "dotenv": "^16.4.7",
+    "hono-rate-limiter": "^0.4.2",
     "jose": "^6.0.12",
     "openai": "^5.15.0",
-    "zod": "^3.25.76",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
