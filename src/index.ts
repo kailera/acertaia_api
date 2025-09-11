@@ -28,6 +28,7 @@ import { teamEndpoints } from "./endpoints/teams";
 import { tenantEndpoints } from "./endpoints/tenants";
 import { uploadDirectEndpoints } from "./endpoints/upload-files";
 import { userEndpoints } from "./endpoints/user";
+import { contactEndpoints } from "./endpoints/contacts";
 
 import { PostgresStorage } from "@voltagent/postgres";
 import { waEndpoints } from "./endpoints/wa";
@@ -68,6 +69,7 @@ registerWithCors(fileEndpoints);
 registerWithCors(agentTrainEndpoints);
 registerWithCors(conversationEndpoints);
 registerWithCors(chatEndpoints);
+registerWithCors(contactEndpoints);
 registerWithCors(whatsappEndpoints);
 registerWithCors(waEndpoints);
 
