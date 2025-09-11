@@ -21,12 +21,14 @@ import { contactEndpoints } from "./endpoints/contacts";
 import { conversationEndpoints } from "./endpoints/conversations";
 import { dealEndpoints } from "./endpoints/deals";
 import { documentEndpoints } from "./endpoints/documents";
+import { endoActionEndpoints } from "./endpoints/endo/actions";
 import { endoItemEndpoints } from "./endpoints/endo/items";
 import { endoMaterialEndpoints } from "./endpoints/endo/materials";
 import { endoPostEndpoints } from "./endpoints/endo/posts";
-import { endoActionEndpoints } from "./endpoints/endo/actions";
 import { fileEndpoints } from "./endpoints/files";
 import { financeiroEndpoints } from "./endpoints/financeiro";
+import { sellerKpiDailyEndpoints } from "./endpoints/kpis/sellers";
+import { teamKpiDailyEndpoints } from "./endpoints/kpis/teams";
 import { logisticaEndpoints } from "./endpoints/logistica";
 import { srdEndpoints } from "./endpoints/sdr";
 import { secretaryEndpoints } from "./endpoints/secretary";
@@ -86,6 +88,8 @@ registerWithCors(endoActionEndpoints);
 registerWithCors(endoPostEndpoints);
 registerWithCors(whatsappEndpoints);
 registerWithCors(waEndpoints);
+registerWithCors(sellerKpiDailyEndpoints);
+registerWithCors(teamKpiDailyEndpoints);
 
 // Se seu server precisar PORT/HOST, use estas vars (o VoltAgent pode cuidar disso internamente)
 const PORT = Number(process.env.PORT) || 3141;
