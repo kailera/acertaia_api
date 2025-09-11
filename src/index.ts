@@ -25,6 +25,7 @@ import { srdEndpoints } from "./endpoints/sdr";
 import { secretaryEndpoints } from "./endpoints/secretary";
 import { supervisorEndpoints } from "./endpoints/supervisor";
 import { teamEndpoints } from "./endpoints/teams";
+import { tenantEndpoints } from "./endpoints/tenants";
 import { uploadDirectEndpoints } from "./endpoints/upload-files";
 import { userEndpoints } from "./endpoints/user";
 
@@ -59,6 +60,7 @@ registerWithCors(logisticaEndpoints);
 registerWithCors(supervisorEndpoints);
 registerWithCors(agentEndpoints);
 registerWithCors(teamEndpoints);
+registerWithCors(tenantEndpoints);
 registerWithCors(documentEndpoints);
 registerWithCors(agentDocumentEndpoints);
 registerWithCors(uploadDirectEndpoints);
