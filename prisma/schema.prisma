@@ -23,6 +23,7 @@ model Tenant {
   teamMembers TeamMember[]
   campaigns   Campaign[]
   leads       Lead[]
+  slaConfigs  SlaConfig[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -277,6 +278,22 @@ model SupervisorConfig {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ---------- SLA Configurações por Tenant ----------
+model SlaConfig {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  name   String?
+  config Json?
+  active Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, active])
 }
 
 // ---------- Agente / Sub-agente ----------
