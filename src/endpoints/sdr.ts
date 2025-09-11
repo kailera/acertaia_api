@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { SDRChat } from "../agents/sdr";
+import { ok } from "../utils/response";
 
 export const srdEndpoints: CustomEndpointDefinition[] = [
 	{
@@ -19,21 +20,21 @@ export const srdEndpoints: CustomEndpointDefinition[] = [
 			try {
 				const response = await SDRChat(input, userId, convId);
 				return c.json(
-					{
+					ok({
 						success: true,
 						message: "message successfull",
 						data: { ...response, conversationId: convId },
-					},
+					}),
 					201,
 				);
 			} catch (error: unknown) {
 				return c.json(
-					{
+					ok({
 						success: false,
 						message:
 							error instanceof Error ? error.message : "Invalid request body",
 						data: null,
-					},
+					}),
 					400,
 				);
 			}
