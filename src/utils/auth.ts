@@ -18,6 +18,19 @@ export async function getUserIdFromHeaders(c: Context): Promise<string | null> {
 	}
 }
 
+// Ensure request has either a valid bearer token or an accepted x-api-key
+export async function ensureApiKeyOrToken(c: Context) {
+	const apiKey = c.req.header("x-api-key");
+	const allowed = (process.env.API_KEYS || process.env.API_KEY || "")
+		.split(",")
+		.map((k) => k.trim())
+		.filter(Boolean);
+	if (apiKey && allowed.includes(apiKey)) return true;
+	const userId = await getUserIdFromHeaders(c);
+	if (userId) return true;
+	throw new Error("invalid credentials");
+}
+
 // Ensures the `instance` belongs to the user obtained from headers
 export async function ensureInstanceAccess(c: Context, instance: string) {
 	const userId = await getUserIdFromHeaders(c);

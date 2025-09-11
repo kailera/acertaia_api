@@ -1,6 +1,7 @@
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { SecretaryChat } from "../agents/secretary";
+import { ensureApiKeyOrToken } from "../utils/auth";
 import { prisma } from "../utils/prisma";
 
 type ParsedMessage = {
@@ -18,6 +19,11 @@ export const whatsappEndpoints: CustomEndpointDefinition[] = [
 		path: "/api/message-upsert",
 		method: "post" as const,
 		handler: async (c: Context): Promise<Response> => {
+			try {
+				await ensureApiKeyOrToken(c);
+			} catch {
+				return c.json({ success: false, message: "unauthorized" }, 401);
+			}
 			const body = await c.req.json().catch(() => ({}));
 			const { parsedMessages } = body as { parsedMessages: ParsedMessage[] };
 			// salvar a mensagem no banco de dados

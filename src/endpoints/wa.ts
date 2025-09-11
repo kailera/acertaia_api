@@ -1,20 +1,23 @@
 import { AgentType } from "@prisma/client";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
-import { ensureInstanceAccess } from "../utils/auth";
+import { ensureApiKeyOrToken, ensureInstanceAccess } from "../utils/auth";
 import { prisma } from "../utils/prisma";
 
 function getReply(res: unknown): string | undefined {
-  const r = res as any;
-  return (
-    r?.reply ??
-    r?.text ??
-    r?.output_text ??
-    r?.content ??
-    r?.message ??
-    (Array.isArray(r?.choices) && (r.choices[0]?.message?.content?.[0]?.text || r.choices[0]?.message?.content)) ??
-    (typeof r === "string" ? r : undefined)
-  );
+	// biome-ignore lint/suspicious/noExplicitAny: flexible response shape
+	const r = res as any;
+	return (
+		r?.reply ??
+		r?.text ??
+		r?.output_text ??
+		r?.content ??
+		r?.message ??
+		(Array.isArray(r?.choices) &&
+			(r.choices[0]?.message?.content?.[0]?.text ||
+				r.choices[0]?.message?.content)) ??
+		(typeof r === "string" ? r : undefined)
+	);
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: flexible message shape
@@ -67,6 +70,11 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 		path: "/instances/:instance/verify",
 		method: "get" as const,
 		handler: async (c: Context): Promise<Response> => {
+			try {
+				await ensureApiKeyOrToken(c);
+			} catch {
+				return c.json({ success: false, message: "unauthorized" }, 401);
+			}
 			const instance = c.req.param("instance");
 			try {
 				const { userId } = await ensureInstanceAccess(c, instance);
@@ -97,6 +105,11 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 		path: "/api/wa/webhook",
 		method: "post" as const,
 		handler: async (c: Context): Promise<Response> => {
+			try {
+				await ensureApiKeyOrToken(c);
+			} catch {
+				return c.json({ success: false, message: "unauthorized" }, 401);
+			}
 			// biome-ignore lint/suspicious/noExplicitAny: unknown body shape
 			const body = await c.req.json().catch(() => ({}) as any);
 			const instance = (
@@ -116,7 +129,11 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 				body?.data?.messages ||
 				(Array.isArray(body) ? body : []);
 			// Accept simplified shape: single object with remoteJid/message (for testing/frontend)
-			if ((!items || items.length === 0) && (body?.remoteJid || body?.key?.remoteJid) && (body?.message || body?.body)) {
+			if (
+				(!items || items.length === 0) &&
+				(body?.remoteJid || body?.key?.remoteJid) &&
+				(body?.message || body?.body)
+			) {
 				items = [body];
 			}
 
@@ -127,7 +144,11 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 			try {
 				// biome-ignore lint/suspicious/noExplicitAny: flexible message shape
 				const saved: any[] = [];
-				const replies: Array<{ remoteJid: string; reply: string; conversationId: string }> = [];
+				const replies: Array<{
+					remoteJid: string;
+					reply: string;
+					conversationId: string;
+				}> = [];
 				for (const it of items) {
 					// Support two shapes: our ParsedMessage or Evolution's Baileys-ish event
 					if (it?.remoteJid || it?.message) {
@@ -266,7 +287,10 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 					console.error("routing error", routeErr);
 				}
 
-				return c.json({ success: true, data: { count: saved.length, replies } }, 201);
+				return c.json(
+					{ success: true, data: { count: saved.length, replies } },
+					201,
+				);
 			} catch (err: unknown) {
 				const message = err instanceof Error ? err.message : "error";
 				return c.json({ success: false, message }, 400);
@@ -397,13 +421,21 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 			// biome-ignore lint/suspicious/noExplicitAny: flexible input
 			const body = (await c.req.json().catch(() => ({}))) as any;
 			const remoteJid = String(
-				body.remoteJid || body.jid || body.to || body.number || body.chatId || "",
+				body.remoteJid ||
+					body.jid ||
+					body.to ||
+					body.number ||
+					body.chatId ||
+					"",
 			).trim();
 			const text = String(body.message || body.text || body.body || "").trim();
 			const messageId = body.messageId ? String(body.messageId) : undefined;
 			const timestamp = body.timestamp ? new Date(body.timestamp) : new Date();
 			if (!remoteJid || !text)
-				return c.json({ success: false, message: "missing remoteJid or message" }, 400);
+				return c.json(
+					{ success: false, message: "missing remoteJid or message" },
+					400,
+				);
 
 			try {
 				await ensureInstanceAccess(c, instance);
@@ -567,7 +599,10 @@ export const waEndpoints: CustomEndpointDefinition[] = [
 					body: msg,
 					timestamp: Date.now(),
 				});
-				return c.json({ success: true, data: { deliveredBy: "frontend", to: dest } }, 200);
+				return c.json(
+					{ success: true, data: { deliveredBy: "frontend", to: dest } },
+					200,
+				);
 			} catch (e: unknown) {
 				console.error("send error", e);
 				return c.json({ success: false, message: "internal error" }, 500);
