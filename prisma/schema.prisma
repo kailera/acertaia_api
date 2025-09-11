@@ -20,6 +20,7 @@ model Tenant {
   users       User[]
   teams       Team[]
   teamMembers TeamMember[]
+  campaigns   Campaign[]
 
   @@map("tenant")
 }
@@ -40,6 +41,7 @@ model User {
   contacts        Contacts[]
   employee        Employees[]
   Document        Document[]
+  assignedLeads   Lead[]
 
   @@map("user")
 }
@@ -239,6 +241,9 @@ enum Channel {
   EMAIL
   TELEGRAM
   FACEBOOK
+  META
+  GOOGLE
+  QR_CODE
 }
 
 enum JobStatus {
@@ -345,6 +350,7 @@ model Team {
 
   membros TeamMember[]
   regras  Rule[]
+  leads   Lead[]
 
   @@index([tenantId])
 }
@@ -770,6 +776,7 @@ model Contacts {
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updateAt  DateTime @updatedAt
+  leads     Lead[]
 
   @@map("contacts")
 }
@@ -800,10 +807,13 @@ model Campaign {
   id          String    @id @default(cuid())
   name        String
   channel     Channel // Meta, Google, QR Code etc.
+  origin      String?
   startDate   DateTime
   endDate     DateTime?
-  active      Boolean   @default(true)
   description String?
+  status      CampaignStatus @default(PLANNED)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
 
   leads    Lead[] // leads captados por essa campanha
   contents Content[] // materiais enviados aos leads
@@ -812,6 +822,14 @@ model Campaign {
   updatedAt DateTime @updatedAt
 
   CampaignReport CampaignReport[]
+}
+
+enum CampaignStatus {
+  PLANNED
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
 }
 
 model Lead {
@@ -828,11 +846,23 @@ model Lead {
   utmCampaign String?
   capturedAt  DateTime   @default(now())
   status      LeadStatus @default(NEW)
+  stage       LeadStage?
+  probability Float?
+  lastInteractionAt DateTime?
+
+  contactId String?
+  contact   Contacts? @relation(fields: [contactId], references: [id])
+
+  teamId String?
+  team   Team? @relation(fields: [teamId], references: [id])
+
+  assignedToId String?
+  assignedTo   User? @relation(fields: [assignedToId], references: [id])
 
   campaignId String   @default("DEFAULT")
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
-  interactions Interaction[]
+  interactions LeadInteraction[]
 }
 
 enum LeadStatus {
@@ -841,6 +871,14 @@ enum LeadStatus {
   QUALIFIED
   CONVERTED
   DISQUALIFIED
+}
+
+enum LeadStage {
+  CONTACTED
+  QUALIFIED
+  SCHEDULED
+  WON
+  LOST
 }
 
 enum Persona {
@@ -866,7 +904,7 @@ model Content {
   campaignId String
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
-  Interaction Interaction[]
+  interactions LeadInteraction[]
 }
 
 enum ContentType {
@@ -877,17 +915,17 @@ enum ContentType {
   GUIDE
 }
 
-model Interaction {
-  id        String          @id @default(cuid())
+model LeadInteraction {
+  id        String             @id @default(cuid())
   leadId    String
-  lead      Lead            @relation(fields: [leadId], references: [id])
+  lead      Lead               @relation(fields: [leadId], references: [id])
   contentId String?
-  content   Content?        @relation(fields: [contentId], references: [id])
-  type      InteractionType
-  timestamp DateTime        @default(now())
+  content   Content?           @relation(fields: [contentId], references: [id])
+  type      LeadInteractionType
+  timestamp DateTime           @default(now())
 }
 
-enum InteractionType {
+enum LeadInteractionType {
   MESSAGE_SENT
   MATERIAL_SENT
   CLICK

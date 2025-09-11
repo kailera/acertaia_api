@@ -1,4 +1,4 @@
-import { PrismaClient, AgentType, Channel, Role } from "@prisma/client";
+import { PrismaClient, AgentType, Channel, Role, CampaignStatus } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -71,6 +71,8 @@ async function main() {
                         name: "DEFAULT",
                         channel: Channel.WEB,
                         startDate: new Date(),
+                        status: CampaignStatus.ACTIVE,
+                        tenantId: tenant.id,
                 },
         });
 
