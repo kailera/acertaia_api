@@ -1,57 +1,87 @@
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
+import { rateLimiter } from "hono-rate-limiter";
 import { loginUser } from "../services/login";
 import { createInstance } from "../services/users";
+import { logFailedLoginAttempt } from "../utils/login-attempts";
+
+const loginRateLimit = rateLimiter({
+	windowMs: 60 * 1000,
+	limit: 5,
+	keyGenerator: (c) =>
+		c.req.header("x-forwarded-for") ||
+		c.req.header("cf-connecting-ip") ||
+		c.req.header("x-real-ip") ||
+		"unknown",
+});
 
 export const userEndpoints: CustomEndpointDefinition[] = [
 	{
 		path: "/api/login",
 		method: "post" as const,
-		handler: async (c: Context): Promise<Response> => {
-			try {
-				const body = await c.req.json().catch(() => null);
-				if (!body || typeof body !== "object")
-					return c.json({ success: false, message: "Invalid JSON body" }, 400);
-				const { email, password } = body as {
-					email?: string;
-					password?: string;
-				};
-				if (!email || !password)
+		handler: async (c: Context): Promise<Response> =>
+			loginRateLimit(c, async () => {
+				const ip =
+					c.req.header("x-forwarded-for") ||
+					c.req.header("cf-connecting-ip") ||
+					c.req.header("x-real-ip") ||
+					"unknown";
+				const userAgent = c.req.header("user-agent") || "unknown";
+				const registerFailure = async (email?: string) =>
+					logFailedLoginAttempt(ip, userAgent, email);
+				try {
+					const body = await c.req.json().catch(() => null);
+					if (!body || typeof body !== "object") {
+						await registerFailure();
+						return c.json(
+							{ success: false, message: "Invalid JSON body" },
+							400,
+						);
+					}
+					const { email, password } = body as {
+						email?: string;
+						password?: string;
+					};
+					if (!email || !password) {
+						await registerFailure(email);
+						return c.json(
+							{ success: false, message: "email and password are required" },
+							400,
+						);
+					}
+					const result = await loginUser(email, password);
+					if (!result.success) {
+						await registerFailure(email);
+						return c.json(
+							{
+								success: false,
+								message: "Invalid Credentials",
+							},
+							401,
+						);
+					}
+
 					return c.json(
-						{ success: false, message: "email and password are required" },
-						400,
+						{
+							success: true,
+							message: "Login successful",
+							data: { token: result.token },
+						},
+						200,
 					);
-				const result = await loginUser(email, password);
-				if (!result.success) {
+				} catch (error: unknown) {
+					await registerFailure();
 					return c.json(
 						{
 							success: false,
-							message: "Invalid Credentials",
+							message:
+								error instanceof Error ? error.message : "Invalid request body",
+							data: null,
 						},
-						401,
+						400,
 					);
 				}
-
-				return c.json(
-					{
-						success: true,
-						message: "Login successful",
-						data: { token: result.token },
-					},
-					200,
-				);
-			} catch (error: unknown) {
-				return c.json(
-					{
-						success: false,
-						message:
-							error instanceof Error ? error.message : "Invalid request body",
-						data: null,
-					},
-					400,
-				);
-			}
-		},
+			}),
 		description: "[publica] busca email para login",
 	},
 
