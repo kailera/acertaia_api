@@ -17,10 +17,14 @@ datasource db {
 model Tenant {
   id          String       @id @default(cuid())
   name        String
+  slug        String       @unique
   users       User[]
   teams       Team[]
   teamMembers TeamMember[]
   campaigns   Campaign[]
+  leads       Lead[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   @@map("tenant")
 }
@@ -44,6 +48,7 @@ model User {
   assignedLeads   Lead[]
 
   @@map("user")
+  @@index([tenantId])
 }
 
 enum Role {
@@ -822,6 +827,8 @@ model Campaign {
   updatedAt DateTime @updatedAt
 
   CampaignReport CampaignReport[]
+
+  @@index([tenantId])
 }
 
 enum CampaignStatus {
@@ -862,7 +869,12 @@ model Lead {
   campaignId String   @default("DEFAULT")
   campaign   Campaign @relation(fields: [campaignId], references: [id])
 
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
   interactions LeadInteraction[]
+
+  @@index([tenantId])
 }
 
 enum LeadStatus {
