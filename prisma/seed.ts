@@ -4,6 +4,12 @@ import { hash } from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
+        const tenant = await prisma.tenant.upsert({
+                where: { id: "default-tenant" },
+                update: {},
+                create: { id: "default-tenant", name: "Default Tenant" },
+        });
+
         // Seed: demo user with password
         const demoEmail = "demo@acertaia.local";
         const demoPassword = "demo123"; // change in production
@@ -11,12 +17,18 @@ async function main() {
 
         const demoUser = await prisma.user.upsert({
                 where: { email: demoEmail },
-                update: { passwordHash: demoHash, role: Role.ADMIN, name: "Demo User" },
+                update: {
+                        passwordHash: demoHash,
+                        role: Role.ADMIN,
+                        name: "Demo User",
+                        tenantId: tenant.id,
+                },
                 create: {
                         name: "Demo User",
                         email: demoEmail,
                         passwordHash: demoHash,
                         role: Role.ADMIN,
+                        tenantId: tenant.id,
                 },
         });
 
@@ -28,18 +40,25 @@ async function main() {
                 { name: "Financeiro", email: "financeiro@acertaia.local", role: Role.FINANCEIRO },
                 { name: "SDR", email: "sdr@acertaia.local", role: Role.SDR },
                 { name: "Logistica", email: "logistica@acertaia.local", role: Role.LOGISTICA },
+                { name: "Seller", email: "seller@acertaia.local", role: Role.SELLER },
                 { name: "User", email: "user@acertaia.local", role: Role.USER },
         ] as const;
 
         for (const u of users) {
                 await prisma.user.upsert({
                         where: { email: u.email },
-                        update: { name: u.name, role: u.role, passwordHash: demoHash },
+                        update: {
+                                name: u.name,
+                                role: u.role,
+                                passwordHash: demoHash,
+                                tenantId: tenant.id,
+                        },
                         create: {
                                 name: u.name,
                                 email: u.email,
                                 role: u.role,
                                 passwordHash: demoHash,
+                                tenantId: tenant.id,
                         },
                 });
         }
@@ -68,12 +87,13 @@ async function main() {
 
         const owner = await prisma.user.upsert({
                 where: { email: "template@system.local" },
-                update: { passwordHash: demoHash },
+                update: { passwordHash: demoHash, tenantId: tenant.id },
                 create: {
                         name: "Template Owner",
                         email: "template@system.local",
                         passwordHash: demoHash,
                         role: Role.ADMIN,
+                        tenantId: tenant.id,
                 },
         });
 

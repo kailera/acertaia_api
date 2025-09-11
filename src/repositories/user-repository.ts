@@ -7,6 +7,7 @@ interface UserInterface {
 	businessSubscription?: string;
 	passwordHash?: string;
 	role?: string;
+	tenantId?: string;
 }
 
 export const getUserbyEmail = async (email: string) => {
@@ -19,6 +20,7 @@ export const getUserbyEmail = async (email: string) => {
 			role: true,
 			name: true,
 			email: true,
+			tenantId: true,
 			passwordHash: true,
 			whatsappNumbers: {
 				select: {
