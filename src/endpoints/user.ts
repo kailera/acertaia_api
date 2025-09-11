@@ -1,8 +1,10 @@
+import { Role } from "@prisma/client";
 import type { CustomEndpointDefinition } from "@voltagent/core";
+import { hash } from "bcryptjs";
 import type { Context } from "hono";
 import { rateLimiter } from "hono-rate-limiter";
 import { loginUser } from "../services/login";
-import { createInstance } from "../services/users";
+import { createInstance, createUser } from "../services/users";
 import { logFailedLoginAttempt } from "../utils/login-attempts";
 
 const loginRateLimit = rateLimiter({
@@ -16,6 +18,63 @@ const loginRateLimit = rateLimiter({
 });
 
 export const userEndpoints: CustomEndpointDefinition[] = [
+	{
+		path: "/api/users",
+		method: "post" as const,
+		handler: async (c: Context): Promise<Response> => {
+			try {
+				const body = await c.req.json().catch(() => null);
+				if (!body || typeof body !== "object")
+					return c.json({ success: false, message: "Invalid JSON body" }, 400);
+
+				const { name, email, password, tenantId, role } = body as {
+					name?: string;
+					email?: string;
+					password?: string;
+					tenantId?: string;
+					role?: Role;
+				};
+
+				if (!name || !email || !password || !tenantId)
+					return c.json(
+						{
+							success: false,
+							message: "name, email, password and tenantId are required",
+						},
+						400,
+					);
+
+				const passwordHash = await hash(password, 10);
+				const createdUser = await createUser({
+					name,
+					email,
+					passwordHash,
+					role: role ?? Role.USER,
+					tenantId,
+				});
+
+				return c.json(
+					{
+						success: true,
+						message: "user created",
+						data: { id: createdUser.id },
+					},
+					201,
+				);
+			} catch (error: unknown) {
+				return c.json(
+					{
+						success: false,
+						message:
+							error instanceof Error ? error.message : "Invalid request body",
+						data: null,
+					},
+					400,
+				);
+			}
+		},
+		description: "[publica] cria usuário",
+	},
 	{
 		path: "/api/login",
 		method: "post" as const,
