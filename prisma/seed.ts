@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 async function main() {
         const tenant = await prisma.tenant.upsert({
                 where: { id: "default-tenant" },
-                update: {},
-                create: { id: "default-tenant", name: "Default Tenant" },
+                update: { slug: "default" },
+                create: { id: "default-tenant", name: "Default Tenant", slug: "default" },
         });
 
         // Seed: demo user with password

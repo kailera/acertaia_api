@@ -1,20 +1,28 @@
 import { createTool } from "@voltagent/core";
 import { z } from "zod";
+import { createLead } from "../../repositories/lead-repository";
 
 export const sdrCreateLead = createTool({
 	name: "sdr_create_lead",
 	description: "cria um lead com informações básicas",
-	parameters: z.object({
-		email: z.string().email().describe("email do lead"),
-		name: z.string().optional().describe("nome do lead"),
-		phone: z.string().optional().describe("telefone de contato"),
-		channel: z.string().optional().describe("canal de origem"),
-		campaignId: z.string().optional().describe("campanha associada"),
-	}),
-	execute: async ({ email, name, phone, channel, campaignId }) => {
-		// TODO: inserir lead no Postgres
-		return { ok: true, leadId: "TODO", stage: "NEW" as const };
-	},
+        parameters: z.object({
+                tenantId: z.string().describe("identificador do tenant"),
+                email: z.string().email().describe("email do lead"),
+                name: z.string().optional().describe("nome do lead"),
+                phone: z.string().optional().describe("telefone de contato"),
+                channel: z.string().optional().describe("canal de origem"),
+                campaignId: z.string().optional().describe("campanha associada"),
+        }),
+        execute: async ({ tenantId, email, name, phone, channel, campaignId }) => {
+                const lead = await createLead({
+                        firstName: name,
+                        email,
+                        phone,
+                        campaignId,
+                        tenantId,
+                });
+                return { ok: true, leadId: lead.id, stage: lead.status };
+        },
 });
 
 export const sdrUpdateStage = createTool({
