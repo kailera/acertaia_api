@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { CustomEndpointDefinition } from "@voltagent/core";
 import type { Context } from "hono";
 import { SecretaryChat } from "../agents/secretary";
+import { ok } from "../utils/response";
 
 export const secretaryEndpoints: CustomEndpointDefinition[] = [
 	{
@@ -18,21 +19,21 @@ export const secretaryEndpoints: CustomEndpointDefinition[] = [
 			try {
 				const response = await SecretaryChat(input, userId, convId);
 				return c.json(
-					{
+					ok({
 						success: true,
 						message: "message successfull",
 						data: { ...response, conversationId: convId },
-					},
+					}),
 					201,
 				);
 			} catch (error: unknown) {
 				return c.json(
-					{
+					ok({
 						success: false,
 						message:
 							error instanceof Error ? error.message : "Invalid request body",
 						data: null,
-					},
+					}),
 					400,
 				);
 			}
