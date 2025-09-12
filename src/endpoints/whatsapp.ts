@@ -26,10 +26,11 @@ export const whatsappEndpoints: CustomEndpointDefinition[] = [
 			}
 			const body = await c.req.json().catch(() => ({}));
 			const { parsedMessages } = body as { parsedMessages: ParsedMessage[] };
+			const userMessages = parsedMessages.filter((m) => !m.fromMe);
 			// salvar a mensagem no banco de dados
 			try {
 				const savedMessages = await Promise.all(
-					parsedMessages.map((message) =>
+					userMessages.map((message) =>
 						prisma.messages.create({
 							data: {
 								remoteJid: message.remoteJid || "numero desconhecido",
@@ -44,14 +45,24 @@ export const whatsappEndpoints: CustomEndpointDefinition[] = [
 					),
 				);
 
-				// envie para a secretária as mensagens. o user id é o remote JID e o conversationId é a a concatenação entre a messageId junto do sendAt. Input são as mensagens salvas no savedMessages separadas por ponto.
+				if (savedMessages.length === 0) {
+					return c.json(
+						{
+							success: true,
+							message: "Nenhuma mensagem de usuário para processar",
+							data: null,
+						},
+						200,
+					);
+				}
+
+				// envie para a secretária as mensagens. o user id é o remote JID e o conversationId é a a conca
+				// tenação entre a messageId junto do sendAt. Input são as mensagens salvas no savedMessages separadas por ponto.
 				const input = savedMessages.map((m) => m.message).join(". ");
 				const userId = savedMessages[0]?.remoteJid;
 				const conversationId =
 					savedMessages[0]?.messageId && savedMessages[0]?.sendAt
-						? `${
-								savedMessages[0].messageId
-							}_${savedMessages[0].sendAt.getTime()}`
+						? `${savedMessages[0].messageId}_${savedMessages[0].sendAt.getTime()}`
 						: "default_conversation";
 
 				if (!userId) {
