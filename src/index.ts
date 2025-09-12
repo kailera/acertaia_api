@@ -139,6 +139,57 @@ async function main() {
 		throw new Error("PostgreSQL database initialization failed");
 	}
 
+	const publicKey = process.env.VOLTAGENT_PUBLIC_KEY;
+	const secretKey = process.env.VOLTAGENT_SECRET_KEY;
+
+	let voltOpsClient: VoltOpsClient | undefined;
+	if (publicKey && secretKey) {
+		voltOpsClient = new VoltOpsClient({ publicKey, secretKey });
+
+		const originalAddHistoryStep = (
+			memoryStorage as unknown as {
+				addHistoryStep?: (
+					key: string,
+					value: unknown,
+					historyId: string,
+					agentId: string,
+				) => Promise<void>;
+			}
+		).addHistoryStep?.bind(memoryStorage);
+
+		if (originalAddHistoryStep) {
+			(
+				memoryStorage as unknown as {
+					addHistoryStep: (
+						key: string,
+						value: unknown,
+						historyId: string,
+						agentId: string,
+					) => Promise<void>;
+				}
+			).addHistoryStep = async (key, value, historyId, agentId) => {
+				await originalAddHistoryStep(key, value, historyId, agentId);
+				try {
+					const exporter = voltOpsClient?.getObservabilityExporter();
+					await exporter?.exportHistoryStepsAsync(
+						historyId,
+						value as unknown as never[],
+					);
+				} catch (error) {
+					if ((error as { statusCode?: number })?.statusCode === 404) {
+						logger.warn("History entry not found when exporting steps", error);
+					} else {
+						logger.error("Failed to export history steps", error);
+					}
+				}
+			};
+		}
+	} else {
+		logger.warn(
+			"VoltOps telemetry disabled: missing VOLTAGENT_PUBLIC_KEY or VOLTAGENT_SECRET_KEY",
+		);
+	}
+
 	new VoltAgent({
 		agents: {
 			SDRAgent,
@@ -154,10 +205,7 @@ async function main() {
 			port: PORT,
 		},
 		logger,
-		voltOpsClient: new VoltOpsClient({
-			publicKey: process.env.VOLTAGENT_PUBLIC_KEY || "",
-			secretKey: process.env.VOLTAGENT_SECRET_KEY || "",
-		}),
+		...(voltOpsClient ? { voltOpsClient } : {}),
 	});
 
 	logger.info(`Boot OK (HOST=${HOST}, PORT=${PORT})`);
